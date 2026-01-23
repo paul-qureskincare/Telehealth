@@ -37,9 +37,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
               window.initEmbeddables = () => {
                 const engineDomain = new URL(window.location.href).searchParams.get('embeddables_engine_domain') || 'engine.embeddables.com'
                 const urlRoot = engineDomain.startsWith('http') ? engineDomain : 'https://' + engineDomain
+                
+                // Удаляем старый скрипт, если он уже был загружен
+                const existingScript = document.querySelector('script[src*="bundle.js"]')
+                if (existingScript) {
+                  existingScript.remove()
+                }
+                
                 const script = document.createElement('script')
                 script.src = \`\${urlRoot}/bundle.js\`
                 document.head.appendChild(script)
+                
                 const initializeEmbeddables = function () {
                   const allUserData = JSON.parse(localStorage.getItem('SavvyFormUserData') || '{}')
                   const embeddablesToLoad = [...document.querySelectorAll('savvy, embeddable')].map((el) => {
@@ -56,13 +64,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     .then((res) => res.json())
                     .then((response) => eval('(' + response.init_js + ')(response.embeddables_data)'))
                 }
+                
                 if (document.readyState === 'loading') {
                   document.addEventListener('DOMContentLoaded', initializeEmbeddables)
                 } else {
                   initializeEmbeddables()
                 }
               }
-              window.initEmbeddables()
+              
+              // Проверяем наличие обязательных параметров перед инициализацией
+              const urlParams = new URLSearchParams(window.location.search)
+              const hasRequiredParams = urlParams.has('savvy_flow_version') && window.location.hash === '#landing_main'
+              
+              // Инициализируем только если параметры уже есть
+              if (hasRequiredParams) {
+                window.initEmbeddables()
+              }
             `,
           }}
         />
