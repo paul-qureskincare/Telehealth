@@ -15,14 +15,14 @@ function sanitizeCacheKey(value: string) {
 }
 
 function formatDateForCache(): string {
-  // Format: yyyy-mm-dd(H)
+  // Format: yyyy-mm-dd-HH to avoid special characters in filenames
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const date = String(now.getDate()).padStart(2, "0");
   const hours = String(now.getHours()).padStart(2, "0");
   
-  return `${year}-${month}-${date}(${hours})`;
+  return `${year}-${month}-${date}-${hours}`;
 }
 
 function buildExternalUrl(loadParam: string, engineDomain: string) {
