@@ -14,6 +14,17 @@ function sanitizeCacheKey(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function formatDateForCache(): string {
+  // Format: yyyy-mm-dd(H)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const date = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  
+  return `${year}-${month}-${date}(${hours})`;
+}
+
 function buildExternalUrl(loadParam: string, engineDomain: string) {
   const urlRoot = engineDomain.startsWith("http") ? engineDomain : `https://${engineDomain}`;
   return `${urlRoot}/init?load=${encodeURIComponent(loadParam)}`;
@@ -45,7 +56,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   await ensureCacheDir();
   const safeFlowId = sanitizeCacheKey(flowId);
-  const cacheFile = path.join(CACHE_DIR, `embed-flow-${safeFlowId}.json`);
+  const datePrefix = formatDateForCache();
+  const cacheFile = path.join(CACHE_DIR, `${datePrefix}_${safeFlowId}.json`);
   const cacheValid = await isCacheValid(cacheFile, TTL_MS);
 
   if (cacheValid) {
