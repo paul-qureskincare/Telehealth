@@ -73,9 +73,9 @@ export class CacheManager {
     }
 
     try {
-      console.log(`[CacheManager] Calling provider.set() with ttl: ${this.ttl}`);
+      console.log(`[CacheManager] Calling provider.set() with ttl: ${this.ttl}ms`);
       await this.provider.set(key, data, this.ttl);
-      console.log(`[CacheManager] ✅ Provider set() completed`);
+      console.log(`[CacheManager] ✅ Provider set() completed successfully`);
     } catch (error) {
       console.error('[CacheManager] Error setting cache:', error);
     }

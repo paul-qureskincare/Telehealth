@@ -191,11 +191,12 @@ export class RedisCacheProvider implements CacheProvider {
         const compressionRatio = ((1 - originalSize / decompressedSize) * 100).toFixed(1);
         
         console.log(
-          `[RedisCacheProvider] Decompressed: ${(originalSize / 1024).toFixed(1)} KB → ${(decompressedSize / 1024).toFixed(1)} KB (${compressionRatio}% saved)`
+          `[RedisCacheProvider] ✅ CACHE DECOMPRESSED: ${(originalSize / 1024).toFixed(1)} KB → ${(decompressedSize / 1024).toFixed(1)} KB (saved ${compressionRatio}%)`
         );
       } else {
         // Backward compatibility: handle uncompressed data
         jsonString = content.toString('utf-8');
+        console.log(`[RedisCacheProvider] ⚠️  Cache data is not compressed (backward compatibility mode)`);
       }
 
       // Parse cache entry (measure JSON.parse time)
@@ -263,7 +264,7 @@ export class RedisCacheProvider implements CacheProvider {
         const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
         
         console.log(
-          `[RedisCacheProvider] Compressed: ${(originalSize / 1024).toFixed(1)} KB → ${(compressedSize / 1024).toFixed(1)} KB (${compressionRatio}% saved)`
+          `[RedisCacheProvider] ✅ CACHE COMPRESSED: ${(originalSize / 1024).toFixed(1)} KB → ${(compressedSize / 1024).toFixed(1)} KB (saved ${compressionRatio}%) in ${compressTime}ms`
         );
       }
       

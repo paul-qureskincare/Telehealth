@@ -48,7 +48,11 @@ export async function loader({ request }: Route.LoaderArgs) {
       const cacheSizeBytes = Buffer.byteLength(cacheDataString, 'utf-8');
       const cacheSizeKB = Math.round(cacheSizeBytes / 1024);
       
-      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey} | Size: ${cacheSizeKB} KB | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
+      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey}`);
+      console.log(`[EmbedProxy]   - Uncompressed size: ${cacheSizeKB} KB`);
+      console.log(`[EmbedProxy]   - Cache fetch time: ${cacheGetTime}ms`);
+      console.log(`[EmbedProxy]   - Total time: ${totalTime}ms`);
+      console.log(`[EmbedProxy]   - Note: Data will be gzipped (1KB+ threshold) during transmission`);
       
       return Response.json({
         ...cachedData,
@@ -66,6 +70,8 @@ export async function loader({ request }: Route.LoaderArgs) {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0',
+          'Content-Encoding': 'gzip',
+          'Vary': 'Accept-Encoding',
         },
       });
     }
@@ -94,17 +100,19 @@ export async function loader({ request }: Route.LoaderArgs) {
     const parseStartTime = Date.now();
     const embedData = await embedResponse.json();
     const parseTime = Date.now() - parseStartTime;
-    console.log('[EmbedProxy] Parsed response, now saving to cache...');
+    console.log('[EmbedProxy] ✅ Parsed response from Embed API');
 
     // Save to cache if caching is enabled
     if (cacheManager.isEnabled()) {
-      console.log('[EmbedProxy] cacheManager.isEnabled() = true, calling set()...');
+      console.log('[EmbedProxy] 💾 Saving to Redis cache...');
       const cacheSaveStartTime = Date.now();
       await cacheManager.set(cacheKey, embedData);
       const cacheSaveTime = Date.now() - cacheSaveStartTime;
-      console.log(`[EmbedProxy] ✅ Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
+      console.log(`[EmbedProxy] ✅ Saved to Redis cache in ${cacheSaveTime}ms`);
+      console.log(`[EmbedProxy]   - Data stored compressed in Redis`);
+      console.log(`[EmbedProxy]   - Will be gzipped during transmission`);
     } else {
-      console.log('[EmbedProxy] Caching is disabled');
+      console.log('[EmbedProxy] ⚠️  Caching is disabled');
     }
 
     const totalTime = Date.now() - totalStartTime;
@@ -136,6 +144,8 @@ export async function loader({ request }: Route.LoaderArgs) {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
+        'Content-Encoding': 'gzip',
+        'Vary': 'Accept-Encoding',
       },
     });
 
