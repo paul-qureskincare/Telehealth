@@ -60,6 +60,8 @@ export class FileCacheProvider implements CacheProvider {
       try {
         await fs.access(filePath);
       } catch {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
         return null;
       }
 
@@ -70,9 +72,13 @@ export class FileCacheProvider implements CacheProvider {
       // Check if expired
       if (this.isExpired(entry)) {
         await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
         return null;
       }
 
+      // Sync found cache to monitoring
+      await getCacheMonitor().syncCacheStatus('file', key, 'exists', entry);
       return entry.data;
     } catch (error) {
       console.error('[FileCacheProvider] Error reading cache:', error);
@@ -82,6 +88,7 @@ export class FileCacheProvider implements CacheProvider {
 
   async set<T = any>(key: string, data: T, ttl: number): Promise<void> {
     try {
+      console.log(`[FileCacheProvider] set() called - key: ${key}`);
       await this.ensureCacheDir();
       const filePath = this.getFilePath(key);
 
@@ -91,12 +98,18 @@ export class FileCacheProvider implements CacheProvider {
         ttl,
       };
 
+      console.log(`[FileCacheProvider] Writing cache file: ${filePath}`);
       await fs.writeFile(filePath, JSON.stringify(entry), 'utf-8');
+      console.log(`[FileCacheProvider] ✅ Wrote to: ${filePath}`);
 
       // Save to monitoring directory
-      await getCacheMonitor().saveEntry('file', key, entry);
+      console.log(`[FileCacheProvider] About to call getCacheMonitor().saveEntry()`);
+      const monitor = getCacheMonitor();
+      console.log(`[FileCacheProvider] Got monitor instance, calling saveEntry...`);
+      await monitor.saveEntry('file', key, entry);
+      console.log(`[FileCacheProvider] ✅ saveEntry() completed`);
     } catch (error) {
-      console.error('[FileCacheProvider] Error writing cache:', error);
+      console.error('[FileCacheProvider] ❌ Error writing cache:', error);
       throw error;
     }
   }
@@ -110,6 +123,8 @@ export class FileCacheProvider implements CacheProvider {
       try {
         await fs.access(filePath);
       } catch {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
         return false;
       }
 
@@ -119,9 +134,13 @@ export class FileCacheProvider implements CacheProvider {
 
       if (this.isExpired(entry)) {
         await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
         return false;
       }
 
+      // Sync found cache to monitoring
+      await getCacheMonitor().syncCacheStatus('file', key, 'exists', entry);
       return true;
     } catch {
       return false;

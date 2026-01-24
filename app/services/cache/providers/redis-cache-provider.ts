@@ -81,6 +81,8 @@ export class RedisCacheProvider implements CacheProvider {
       const fetchTime = Date.now() - startTime;
       
       if (!content) {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
         return null;
       }
 
@@ -92,6 +94,8 @@ export class RedisCacheProvider implements CacheProvider {
       // Check if expired (double-check even though Redis TTL should handle this)
       if (this.isExpired(entry)) {
         await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
         return null;
       }
 
@@ -100,7 +104,7 @@ export class RedisCacheProvider implements CacheProvider {
       );
       
       // Save to monitoring directory when cache is hit
-      await getCacheMonitor().saveEntry('redis', key, entry);
+      await getCacheMonitor().syncCacheStatus('redis', key, 'exists', entry);
       
       return entry.data;
     } catch (error) {
@@ -141,6 +145,8 @@ export class RedisCacheProvider implements CacheProvider {
       const exists = await this.client.exists(redisKey);
       
       if (exists === 0) {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
         return false;
       }
 
@@ -148,6 +154,8 @@ export class RedisCacheProvider implements CacheProvider {
       const content = await this.client.get(redisKey);
       
       if (!content) {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
         return false;
       }
 
@@ -155,9 +163,13 @@ export class RedisCacheProvider implements CacheProvider {
 
       if (this.isExpired(entry)) {
         await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
         return false;
       }
 
+      // Sync found cache to monitoring
+      await getCacheMonitor().syncCacheStatus('redis', key, 'exists', entry);
       return true;
     } catch {
       return false;
