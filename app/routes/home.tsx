@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/home";
+import { EmbedCacheDebugPanel } from "../components/EmbedCacheDebugPanel";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -45,13 +46,7 @@ export default function Home() {
 
   return (
     <main>
+      <EmbedCacheDebugPanel />
     </main>
   );
-}
-
-// Расширяем тип Window для TypeScript
-declare global {
-  interface Window {
-    initEmbeddables?: () => void;
-  }
 }

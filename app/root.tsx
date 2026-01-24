@@ -59,10 +59,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     return attrs
                   })
                   const originUrl = window.location.href
-                  const url = \`\${urlRoot}/init?load=\` + encodeURIComponent(JSON.stringify({ embeddablesToLoad, originUrl }))
-                  fetch(url)
+                  
+                  // Use our proxy API endpoint instead of direct call to engine
+                  const loadData = JSON.stringify({ embeddablesToLoad, originUrl })
+                  const proxyUrl = '/api/embed-proxy?load=' + encodeURIComponent(loadData) + '&engine_domain=' + encodeURIComponent(engineDomain)
+                  
+                  // Track loading state
+                  const startTime = Date.now()
+                  
+                  fetch(proxyUrl)
                     .then((res) => res.json())
-                    .then((response) => eval('(' + response.init_js + ')(response.embeddables_data)'))
+                    .then((response) => {
+                      const loadTime = Date.now() - startTime
+                      
+                      // Display cache status if debug mode is enabled
+                      if (response._cache_meta) {
+                        console.log('[Embeddables] Load source:', response._cache_meta.source)
+                        console.log('[Embeddables] Load time:', loadTime + 'ms')
+                        console.log('[Embeddables] Cached:', response._cache_meta.cached)
+                        
+                        // Update debug panel if exists
+                        window._embedCacheMeta = {
+                          ...response._cache_meta,
+                          loadTime
+                        }
+                        window.dispatchEvent(new CustomEvent('embed-loaded'))
+                      }
+                      
+                      // Execute the embed initialization
+                      eval('(' + response.init_js + ')(response.embeddables_data)')
+                    })
+                    .catch((error) => {
+                      console.error('[Embeddables] Load error:', error)
+                    })
                 }
                 
                 if (document.readyState === 'loading') {
