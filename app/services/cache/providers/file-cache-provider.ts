@@ -86,6 +86,51 @@ export class FileCacheProvider implements CacheProvider {
     }
   }
 
+  async getWithMeta<T = any>(key: string): Promise<import('../types').CacheResultWithMeta<T> | null> {
+    try {
+      await this.ensureCacheDir();
+      const filePath = this.getFilePath(key);
+
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
+        return null;
+      }
+
+      // Read and parse cache file
+      const content = await fs.readFile(filePath, 'utf-8');
+      const entry: CacheEntry<T> = JSON.parse(content);
+
+      // Check if expired
+      if (this.isExpired(entry)) {
+        await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
+        return null;
+      }
+
+      // Calculate uncompressed size
+      const uncompressedSize = Buffer.byteLength(content, 'utf-8');
+
+      // Sync found cache to monitoring
+      await getCacheMonitor().syncCacheStatus('file', key, 'exists', entry);
+      
+      return {
+        data: entry.data,
+        metadata: {
+          uncompressedSize,
+          isCompressed: false,
+        },
+      };
+    } catch (error) {
+      console.error('[FileCacheProvider] Error reading cache with meta:', error);
+      return null;
+    }
+  }
+
   async set<T = any>(key: string, data: T, ttl: number): Promise<void> {
     try {
       console.log(`[FileCacheProvider] set() called - key: ${key}`);

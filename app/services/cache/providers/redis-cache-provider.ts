@@ -227,6 +227,88 @@ export class RedisCacheProvider implements CacheProvider {
     }
   }
 
+  async getWithMeta<T = any>(key: string): Promise<import('../types').CacheResultWithMeta<T> | null> {
+    try {
+      // Ensure connection is established (lazy connect)
+      if (!isConnected) {
+        await this.client.connect();
+      }
+
+      const redisKey = this.getKey(key);
+      const startTime = Date.now();
+      
+      // Get data from Redis as Buffer to preserve compression
+      const content = await this.client.getBuffer(redisKey);
+      const fetchTime = Date.now() - startTime;
+      
+      if (!content) {
+        // Sync cache miss to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
+        return null;
+      }
+
+      let jsonString: string;
+      let decompressTime = 0;
+      const compressedSize = content.length;
+      let isCompressed = false;
+
+      // Check if data is compressed
+      if (this.isCompressed(content)) {
+        isCompressed = true;
+        const decompressStart = Date.now();
+        jsonString = await this.decompress(content);
+        decompressTime = Date.now() - decompressStart;
+        
+        const decompressedSize = Buffer.byteLength(jsonString, 'utf-8');
+        const compressionRatio = ((1 - compressedSize / decompressedSize) * 100).toFixed(1);
+        
+        console.log(
+          `[RedisCacheProvider] ✅ CACHE DECOMPRESSED: ${(compressedSize / 1024).toFixed(1)} KB → ${(decompressedSize / 1024).toFixed(1)} KB (saved ${compressionRatio}%)`
+        );
+      } else {
+        // Backward compatibility: handle uncompressed data
+        jsonString = content.toString('utf-8');
+        console.log(`[RedisCacheProvider] ⚠️  Cache data is not compressed (backward compatibility mode)`);
+      }
+
+      const uncompressedSize = Buffer.byteLength(jsonString, 'utf-8');
+
+      // Parse cache entry (measure JSON.parse time)
+      const parseStart = Date.now();
+      const entry: CacheEntry<T> = JSON.parse(jsonString);
+      const parseTime = Date.now() - parseStart;
+
+      // Check if expired (double-check even though Redis TTL should handle this)
+      if (this.isExpired(entry)) {
+        await this.delete(key);
+        // Sync expired cache to monitoring
+        await getCacheMonitor().syncCacheStatus('redis', key, 'missing');
+        return null;
+      }
+
+      const totalTime = fetchTime + decompressTime + parseTime;
+      console.log(
+        `[RedisCacheProvider] Cache HIT (with meta): ${key} | Redis fetch: ${fetchTime}ms | Decompress: ${decompressTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`
+      );
+      
+      // Save to monitoring directory when cache is hit
+      await getCacheMonitor().syncCacheStatus('redis', key, 'exists', entry);
+
+      return {
+        data: entry.data,
+        metadata: {
+          compressedSize: isCompressed ? compressedSize : undefined,
+          uncompressedSize,
+          compressionRatio: isCompressed ? parseFloat(((1 - compressedSize / uncompressedSize) * 100).toFixed(1)) : undefined,
+          isCompressed,
+        },
+      };
+    } catch (error) {
+      console.error('[RedisCacheProvider] Error reading cache with meta:', error);
+      return null;
+    }
+  }
+
   async set<T = any>(key: string, data: T, ttl: number): Promise<void> {
     try {
       // Ensure connection is established (lazy connect)

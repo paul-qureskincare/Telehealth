@@ -34,25 +34,28 @@ export async function loader({ request }: Route.LoaderArgs) {
     const cacheKey = `embed_${engineDomain}_${Buffer.from(loadParam).toString('base64').slice(0, 50)}`;
     console.log('[EmbedProxy] cacheKey:', cacheKey);
 
-    // Try to get cached data first
+    // Try to get cached data first with metadata
     console.log('[EmbedProxy] Checking cache...');
     const cacheGetStartTime = Date.now();
-    const cachedData = await cacheManager.get(cacheKey);
+    const cachedResult = await cacheManager.getWithMeta(cacheKey);
     const cacheGetTime = Date.now() - cacheGetStartTime;
     
-    if (cachedData) {
+    if (cachedResult) {
       const totalTime = Date.now() - totalStartTime;
+      const { data: cachedData, metadata } = cachedResult;
       
-      // Calculate cache size in KB
-      const cacheDataString = JSON.stringify(cachedData);
-      const cacheSizeBytes = Buffer.byteLength(cacheDataString, 'utf-8');
-      const cacheSizeKB = Math.round(cacheSizeBytes / 1024);
+      // Calculate sizes in KB
+      const uncompressedKB = Math.round(metadata.uncompressedSize / 1024);
+      const compressedKB = metadata.compressedSize ? Math.round(metadata.compressedSize / 1024) : undefined;
       
       // Calculate remaining time (network, request setup, etc)
       const networkTime = totalTime - cacheGetTime;
       
       console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey}`);
-      console.log(`[EmbedProxy]   - Response size: ${cacheSizeKB} KB`);
+      console.log(`[EmbedProxy]   - Uncompressed size: ${uncompressedKB} KB`);
+      if (compressedKB) {
+        console.log(`[EmbedProxy]   - Compressed size: ${compressedKB} KB (${metadata.compressionRatio?.toFixed(1)}% saved)`);
+      }
       console.log(`[EmbedProxy]   - Cache fetch time: ${cacheGetTime}ms`);
       console.log(`[EmbedProxy]   - Network time: ${networkTime}ms`);
       console.log(`[EmbedProxy]   - Total time: ${totalTime}ms`);
@@ -67,7 +70,10 @@ export async function loader({ request }: Route.LoaderArgs) {
           cache_get_time: cacheGetTime,
           network_time: networkTime,
           total_time: totalTime,
-          cache_size_kb: cacheSizeKB,
+          uncompressed_size_kb: uncompressedKB,
+          compressed_size_kb: compressedKB,
+          compression_ratio: metadata.compressionRatio,
+          is_compressed: metadata.isCompressed,
         },
       }, {
         headers: {

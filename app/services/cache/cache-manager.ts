@@ -62,6 +62,27 @@ export class CacheManager {
   }
 
   /**
+   * Get cached data with metadata (size, compression info)
+   */
+  async getWithMeta<T = any>(key: string): Promise<import('./types').CacheResultWithMeta<T> | null> {
+    console.log(`[CacheManager] getWithMeta() called - enabled: ${this.enabled}, key: ${key}`);
+    
+    if (!this.enabled) {
+      console.log(`[CacheManager] Caching is disabled, returning null`);
+      return null;
+    }
+
+    try {
+      const result = await this.provider.getWithMeta<T>(key);
+      console.log(`[CacheManager] getWithMeta() result: ${result !== null ? '✅ HIT' : '❌ MISS'}`);
+      return result;
+    } catch (error) {
+      console.error('[CacheManager] Error getting cache with meta:', error);
+      return null;
+    }
+  }
+
+  /**
    * Set cached data
    */
   async set<T = any>(key: string, data: T): Promise<void> {

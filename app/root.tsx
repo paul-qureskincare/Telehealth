@@ -89,7 +89,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         
                         console.log('[Embeddables] Load source:', source)
                         console.log('[Embeddables] Load time:', loadTime + 'ms')
-                        console.log('[Embeddables] Data size:', meta.cache_size_kb + ' KB')
+                        
+                        // Log data size (prefer compressed size if available)
+                        if (meta.compressed_size_kb && meta.is_compressed) {
+                          console.log('[Embeddables] Data size (compressed):', meta.compressed_size_kb + ' KB')
+                          console.log('[Embeddables] Data size (uncompressed):', meta.uncompressed_size_kb + ' KB')
+                          console.log('[Embeddables] Compression ratio:', meta.compression_ratio?.toFixed(1) + '% saved')
+                        } else if (meta.uncompressed_size_kb) {
+                          console.log('[Embeddables] Data size:', meta.uncompressed_size_kb + ' KB')
+                        } else if (meta.cache_size_kb) {
+                          console.log('[Embeddables] Data size:', meta.cache_size_kb + ' KB')
+                        }
                         
                         // Log breakdown for native fetches
                         if (meta.source === 'native') {

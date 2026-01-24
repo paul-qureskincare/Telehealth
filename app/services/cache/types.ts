@@ -17,6 +17,34 @@ export interface CacheEntry<T = any> {
   ttl: number;
 }
 
+/**
+ * Cache metadata with size information
+ */
+export interface CacheMetadata {
+  // Size of compressed data in bytes (if compression is used)
+  compressedSize?: number;
+  
+  // Size of uncompressed/original data in bytes
+  uncompressedSize: number;
+  
+  // Compression ratio (0-100%)
+  compressionRatio?: number;
+  
+  // Whether data is compressed
+  isCompressed: boolean;
+}
+
+/**
+ * Result of cache get operation with metadata
+ */
+export interface CacheResultWithMeta<T = any> {
+  // Cached data
+  data: T;
+  
+  // Cache metadata
+  metadata: CacheMetadata;
+}
+
 export interface CacheProvider {
   /**
    * Get cached data by key
@@ -24,6 +52,13 @@ export interface CacheProvider {
    * @returns Cached data or null if not found or expired
    */
   get<T = any>(key: string): Promise<T | null>;
+  
+  /**
+   * Get cached data with metadata (size, compression info)
+   * @param key - Cache key
+   * @returns Cached data with metadata or null if not found or expired
+   */
+  getWithMeta<T = any>(key: string): Promise<CacheResultWithMeta<T> | null>;
   
   /**
    * Set cached data with TTL

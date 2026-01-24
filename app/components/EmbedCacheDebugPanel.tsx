@@ -16,7 +16,11 @@ interface CacheMeta {
   loadTime: number;
   cache_enabled?: boolean;
   cache_provider?: 'file' | 'redis' | 'supabase';
-  cache_size_kb?: number;
+  cache_size_kb?: number; // Legacy field for backward compatibility
+  uncompressed_size_kb?: number;
+  compressed_size_kb?: number;
+  compression_ratio?: number;
+  is_compressed?: boolean;
   // Cache hit metrics
   cache_get_time?: number;
   network_time?: number;
@@ -194,10 +198,37 @@ export function EmbedCacheDebugPanel() {
           <span className="font-mono text-green-400 font-bold">{cacheMeta.loadTime}ms</span>
         </div>
 
-        {cacheMeta.cache_size_kb !== undefined && (
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300">Data Size:</span>
-            <span className="font-mono text-yellow-400">{cacheMeta.cache_size_kb} KB</span>
+        {/* Data Size - show compressed size if available, otherwise uncompressed */}
+        {(cacheMeta.compressed_size_kb !== undefined || cacheMeta.uncompressed_size_kb !== undefined || cacheMeta.cache_size_kb !== undefined) && (
+          <div className="space-y-1">
+            {cacheMeta.compressed_size_kb !== undefined && cacheMeta.is_compressed ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">Data Size (Redis):</span>
+                  <span className="font-mono text-yellow-400 font-bold">{cacheMeta.compressed_size_kb} KB</span>
+                </div>
+                {cacheMeta.uncompressed_size_kb !== undefined && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-xs">Uncompressed:</span>
+                    <span className="font-mono text-gray-400 text-xs">
+                      {cacheMeta.uncompressed_size_kb} KB
+                      {cacheMeta.compression_ratio && (
+                        <span className="text-green-400 ml-1">
+                          ({cacheMeta.compression_ratio.toFixed(1)}% saved)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">Data Size:</span>
+                <span className="font-mono text-yellow-400">
+                  {cacheMeta.uncompressed_size_kb || cacheMeta.cache_size_kb} KB
+                </span>
+              </div>
+            )}
           </div>
         )}
 
