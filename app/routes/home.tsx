@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/home";
 import { EmbedCacheDebugPanel } from "../components/EmbedCacheDebugPanel";
+import { SavvyContainer } from "../components/SavvyContainer";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -37,30 +38,23 @@ export default function Home() {
     }
   }, [searchParams, navigate]);
 
-  // Initialize Embeddables after React hydration
-  useEffect(() => {
-    // Only run on client side after hydration
-    if (typeof window === 'undefined') return;
-
+  // Initialize Embeddables when savvy container is ready
+  const handleSavvyReady = () => {
     const hasVersion = searchParams.has("savvy_flow_version");
     const hasHash = window.location.hash === "#landing_main";
 
     // Initialize only when required params are present
     if (hasVersion && hasHash) {
-      // Small delay to ensure DOM is fully ready after hydration
-      const timer = setTimeout(() => {
-        if (window.initEmbeddables) {
-          console.log('[Home] Initializing Embeddables after React hydration');
-          window.initEmbeddables();
-        }
-      }, 100);
-
-      return () => clearTimeout(timer);
+      if (window.initEmbeddables) {
+        console.log('[Home] Initializing Embeddables after savvy container ready');
+        window.initEmbeddables();
+      }
     }
-  }, [searchParams]);
+  };
 
   return (
     <main>
+      <SavvyContainer onReady={handleSavvyReady} />
       <EmbedCacheDebugPanel />
     </main>
   );

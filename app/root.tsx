@@ -25,7 +25,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -113,12 +113,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <div 
-          id="savvy-container" 
-          dangerouslySetInnerHTML={{ 
-            __html: '<savvy id="flow_2571d52dhga9i00bfhde72a48gj"></savvy>' 
-          }} 
-        />
         <ScrollRestoration />
         <Scripts />
       </body>
