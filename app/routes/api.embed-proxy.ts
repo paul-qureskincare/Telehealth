@@ -13,6 +13,7 @@ import { cacheManager, cacheConfig } from '../services/cache';
  * Loader function that handles GET requests to proxy Embeddables API
  */
 export async function loader({ request }: Route.LoaderArgs) {
+  console.log('[EmbedProxy] ===== LOADER CALLED =====');
   try {
     const totalStartTime = Date.now();
     
@@ -21,21 +22,27 @@ export async function loader({ request }: Route.LoaderArgs) {
     const loadParam = url.searchParams.get('load');
     const engineDomain = url.searchParams.get('engine_domain') || 'engine.embeddables.com';
 
+    console.log('[EmbedProxy] loadParam:', loadParam?.substring(0, 50));
+    console.log('[EmbedProxy] engineDomain:', engineDomain);
+
     if (!loadParam) {
+      console.log('[EmbedProxy] ❌ Missing load parameter');
       return Response.json({ error: 'Missing load parameter' }, { status: 400 });
     }
 
     // Create cache key based on request parameters
     const cacheKey = `embed_${engineDomain}_${Buffer.from(loadParam).toString('base64').slice(0, 50)}`;
+    console.log('[EmbedProxy] cacheKey:', cacheKey);
 
     // Try to get cached data first
+    console.log('[EmbedProxy] Checking cache...');
     const cacheGetStartTime = Date.now();
     const cachedData = await cacheManager.get(cacheKey);
     const cacheGetTime = Date.now() - cacheGetStartTime;
     
     if (cachedData) {
       const totalTime = Date.now() - totalStartTime;
-      console.log(`[EmbedProxy] Serving from cache: ${cacheKey} | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
+      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey} | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
       
       return Response.json({
         ...cachedData,
@@ -47,14 +54,21 @@ export async function loader({ request }: Route.LoaderArgs) {
           cache_get_time: cacheGetTime,
           total_time: totalTime,
         },
+      }, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
       });
     }
 
     // If no cache, fetch from native Embed API
-    console.log(`[EmbedProxy] Cache miss, fetching from native Embed: ${engineDomain} | Cache get time: ${cacheGetTime}ms`);
+    console.log(`[EmbedProxy] ❌ CACHE MISS, fetching from native Embed: ${engineDomain}`);
     
     const urlRoot = engineDomain.startsWith('http') ? engineDomain : `https://${engineDomain}`;
     const embedUrl = `${urlRoot}/init?load=${encodeURIComponent(loadParam)}`;
+    console.log('[EmbedProxy] embedUrl:', embedUrl.substring(0, 100));
 
     const fetchStartTime = Date.now();
     const embedResponse = await fetch(embedUrl, {
@@ -66,25 +80,30 @@ export async function loader({ request }: Route.LoaderArgs) {
     const fetchTime = Date.now() - fetchStartTime;
 
     if (!embedResponse.ok) {
+      console.log(`[EmbedProxy] ❌ Embed API error: ${embedResponse.status}`);
       throw new Error(`Embed API returned ${embedResponse.status}`);
     }
 
     const parseStartTime = Date.now();
     const embedData = await embedResponse.json();
     const parseTime = Date.now() - parseStartTime;
+    console.log('[EmbedProxy] Parsed response, now saving to cache...');
 
     // Save to cache if caching is enabled
     if (cacheManager.isEnabled()) {
+      console.log('[EmbedProxy] cacheManager.isEnabled() = true, calling set()...');
       const cacheSaveStartTime = Date.now();
       await cacheManager.set(cacheKey, embedData);
       const cacheSaveTime = Date.now() - cacheSaveStartTime;
-      console.log(`[EmbedProxy] Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
+      console.log(`[EmbedProxy] ✅ Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
+    } else {
+      console.log('[EmbedProxy] Caching is disabled');
     }
 
     const totalTime = Date.now() - totalStartTime;
-    console.log(`[EmbedProxy] Native fetch completed | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
+    console.log(`[EmbedProxy] ✅ Native fetch completed | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
 
-    // Return response with cache metadata
+    // Return response with cache metadata and no-cache headers
     return Response.json({
       ...embedData,
       _cache_meta: {
@@ -98,10 +117,16 @@ export async function loader({ request }: Route.LoaderArgs) {
         json_parse_time: parseTime,
         total_time: totalTime,
       },
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
 
   } catch (error) {
-    console.error('[EmbedProxy] Error:', error);
+    console.error('[EmbedProxy] ❌ Error:', error);
     
     return Response.json(
       { 

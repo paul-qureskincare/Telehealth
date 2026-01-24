@@ -44,12 +44,17 @@ export class CacheManager {
    * Get cached data
    */
   async get<T = any>(key: string): Promise<T | null> {
+    console.log(`[CacheManager] get() called - enabled: ${this.enabled}, key: ${key}`);
+    
     if (!this.enabled) {
+      console.log(`[CacheManager] Caching is disabled, returning null`);
       return null;
     }
 
     try {
-      return await this.provider.get<T>(key);
+      const result = await this.provider.get<T>(key);
+      console.log(`[CacheManager] get() result: ${result !== null ? '✅ HIT' : '❌ MISS'}`);
+      return result;
     } catch (error) {
       console.error('[CacheManager] Error getting cache:', error);
       return null;
@@ -60,12 +65,17 @@ export class CacheManager {
    * Set cached data
    */
   async set<T = any>(key: string, data: T): Promise<void> {
+    console.log(`[CacheManager] set() called - enabled: ${this.enabled}, key: ${key}`);
+    
     if (!this.enabled) {
+      console.log(`[CacheManager] Caching is disabled, skipping set`);
       return;
     }
 
     try {
+      console.log(`[CacheManager] Calling provider.set() with ttl: ${this.ttl}`);
       await this.provider.set(key, data, this.ttl);
+      console.log(`[CacheManager] ✅ Provider set() completed`);
     } catch (error) {
       console.error('[CacheManager] Error setting cache:', error);
     }
