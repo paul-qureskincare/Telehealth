@@ -10,6 +10,7 @@
 
 import Redis from 'ioredis';
 import type { CacheProvider, CacheEntry } from '../types';
+import { getCacheMonitor } from '../monitor-cache';
 
 export class RedisCacheProvider implements CacheProvider {
   private client: Redis;
@@ -112,6 +113,9 @@ export class RedisCacheProvider implements CacheProvider {
 
       // Store in Redis with expiration
       await this.client.setex(redisKey, ttlSeconds, JSON.stringify(entry));
+
+      // Save to monitoring directory
+      await getCacheMonitor().saveEntry('redis', key, entry);
     } catch (error) {
       console.error('[RedisCacheProvider] Error writing cache:', error);
       throw error;
@@ -153,6 +157,9 @@ export class RedisCacheProvider implements CacheProvider {
     try {
       const redisKey = this.getKey(key);
       await this.client.del(redisKey);
+
+      // Remove from monitoring directory
+      await getCacheMonitor().deleteEntry('redis', key);
     } catch (error) {
       console.error('[RedisCacheProvider] Error deleting cache:', error);
     }
@@ -167,6 +174,9 @@ export class RedisCacheProvider implements CacheProvider {
         // Delete all matching keys
         await this.client.del(...keys);
       }
+
+      // Clear monitoring directory
+      await getCacheMonitor().clearProvider('redis');
     } catch (error) {
       console.error('[RedisCacheProvider] Error clearing cache:', error);
     }

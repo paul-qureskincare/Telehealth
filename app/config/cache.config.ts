@@ -9,6 +9,7 @@
  * - CACHE_PROVIDER: Cache provider type (file/redis/supabase)
  * - CACHE_TTL: Cache time-to-live in milliseconds
  * - CACHE_DEBUG: Enable debug mode (true/false)
+ * - CACHE_SAVE: Save cache to /cache directory for monitoring (true/false)
  */
 
 export interface CacheConfig {
@@ -23,6 +24,9 @@ export interface CacheConfig {
   
   // Enable debug mode to display cache status on frontend
   debug: boolean;
+
+  // Save cache to monitoring directory (true/false)
+  save: boolean;
 }
 
 /**
@@ -84,4 +88,7 @@ export const cacheConfig: CacheConfig = {
   
   // Show debug panel on frontend (default: true)
   debug: getEnvBoolean('CACHE_DEBUG', true),
+
+  // Save cache to monitoring directory (default: false)
+  save: getEnvBoolean('CACHE_SAVE', false),
 };

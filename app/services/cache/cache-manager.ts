@@ -8,6 +8,7 @@
 import { cacheConfig } from '../../config/cache.config';
 import { CacheFactory } from './cache-factory';
 import type { CacheProvider } from './types';
+import { initializeCacheMonitor } from './monitor-cache';
 
 export class CacheManager {
   private provider: CacheProvider;
@@ -18,6 +19,9 @@ export class CacheManager {
     this.enabled = cacheConfig.enabled;
     this.ttl = cacheConfig.ttl;
     this.provider = CacheFactory.createProvider(cacheConfig.provider);
+
+    // Initialize cache monitor
+    initializeCacheMonitor(cacheConfig.save);
   }
 
   /**

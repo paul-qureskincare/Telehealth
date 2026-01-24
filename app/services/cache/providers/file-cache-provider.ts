@@ -12,6 +12,7 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { CacheProvider, CacheEntry } from '../types';
+import { getCacheMonitor } from '../monitor-cache';
 
 export class FileCacheProvider implements CacheProvider {
   private cacheDir: string;
@@ -91,6 +92,9 @@ export class FileCacheProvider implements CacheProvider {
       };
 
       await fs.writeFile(filePath, JSON.stringify(entry), 'utf-8');
+
+      // Save to monitoring directory
+      await getCacheMonitor().saveEntry('file', key, entry);
     } catch (error) {
       console.error('[FileCacheProvider] Error writing cache:', error);
       throw error;
@@ -128,6 +132,9 @@ export class FileCacheProvider implements CacheProvider {
     try {
       const filePath = this.getFilePath(key);
       await fs.unlink(filePath);
+
+      // Remove from monitoring directory
+      await getCacheMonitor().deleteEntry('file', key);
     } catch {
       // Ignore errors if file doesn't exist
     }
@@ -143,6 +150,9 @@ export class FileCacheProvider implements CacheProvider {
           fs.unlink(join(this.cacheDir, file)).catch(() => {})
         )
       );
+
+      // Clear monitoring directory
+      await getCacheMonitor().clearProvider('file');
     } catch (error) {
       console.error('[FileCacheProvider] Error clearing cache:', error);
     }
