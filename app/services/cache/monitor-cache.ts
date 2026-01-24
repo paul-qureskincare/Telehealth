@@ -10,8 +10,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
-import { cwd } from 'node:process';
+import { join, resolve } from 'node:path';
 import type { CacheEntry } from './types';
 
 class CacheMonitor {
@@ -20,7 +19,13 @@ class CacheMonitor {
 
   constructor(enabled: boolean) {
     this.isEnabled = enabled;
-    this.baseMonitorDir = join(cwd(), 'cache');
+    // Use __dirname to get the directory of this file, then navigate to project root
+    // app/services/cache/monitor-cache.ts -> project root is ../../.. (4 levels up)
+    const projectRoot = resolve(__dirname, '../../..');
+    this.baseMonitorDir = join(projectRoot, 'cache');
+    
+    // Log the base monitor directory for debugging
+    console.log('[CacheMonitor] Initialized with base directory:', this.baseMonitorDir);
   }
 
   /**
@@ -78,6 +83,7 @@ class CacheMonitor {
       };
 
       await fs.writeFile(filePath, JSON.stringify(monitorData, null, 2), 'utf-8');
+      console.log(`[CacheMonitor] Saved ${provider} cache entry to: ${filePath}`);
     } catch (error) {
       console.error('[CacheMonitor] Error saving cache entry:', error);
     }

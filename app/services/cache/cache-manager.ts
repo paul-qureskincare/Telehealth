@@ -22,7 +22,7 @@ export class CacheManager {
     this.providerType = cacheConfig.provider;
     this.provider = CacheFactory.createProvider(cacheConfig.provider);
 
-    // Initialize cache monitor
+    // Initialize cache monitor - saves to /cache/file/ or /cache/redis/ based on CACHE_SAVE setting
     initializeCacheMonitor(cacheConfig.save);
   }
 
