@@ -34,15 +34,30 @@ export default function Home() {
       
       // Заменяем URL без перезагрузки страницы
       navigate(newUrl, { replace: true });
-      
-      // Переинициализируем Embed после изменения URL
-      setTimeout(() => {
+    }
+  }, [searchParams, navigate]);
+
+  // Initialize Embeddables after React hydration
+  useEffect(() => {
+    // Only run on client side after hydration
+    if (typeof window === 'undefined') return;
+
+    const hasVersion = searchParams.has("savvy_flow_version");
+    const hasHash = window.location.hash === "#landing_main";
+
+    // Initialize only when required params are present
+    if (hasVersion && hasHash) {
+      // Small delay to ensure DOM is fully ready after hydration
+      const timer = setTimeout(() => {
         if (window.initEmbeddables) {
+          console.log('[Home] Initializing Embeddables after React hydration');
           window.initEmbeddables();
         }
       }, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [searchParams, navigate]);
+  }, [searchParams]);
 
   return (
     <main>

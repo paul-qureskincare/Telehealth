@@ -34,23 +34,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Define initEmbeddables function globally but don't auto-execute
               window.initEmbeddables = () => {
                 const engineDomain = new URL(window.location.href).searchParams.get('embeddables_engine_domain') || 'engine.embeddables.com'
                 const urlRoot = engineDomain.startsWith('http') ? engineDomain : 'https://' + engineDomain
                 
-                // Удаляем старый скрипт, если он уже был загружен
+                // Remove old bundle script if exists
                 const existingScript = document.querySelector('script[src*="bundle.js"]')
                 if (existingScript) {
                   existingScript.remove()
                 }
                 
+                // Inject bundle script
                 const script = document.createElement('script')
                 script.src = \`\${urlRoot}/bundle.js\`
                 document.head.appendChild(script)
                 
                 const initializeEmbeddables = function () {
+                  // Check if elements exist before querying
+                  const containers = document.querySelectorAll('savvy, embeddable')
+                  if (containers.length === 0) {
+                    console.warn('[Embeddables] No savvy/embeddable elements found')
+                    return
+                  }
+                  
                   const allUserData = JSON.parse(localStorage.getItem('SavvyFormUserData') || '{}')
-                  const embeddablesToLoad = [...document.querySelectorAll('savvy, embeddable')].map((el) => {
+                  const embeddablesToLoad = [...containers].map((el) => {
                     const attrs = Object.fromEntries([...el.attributes].map((a) => [a.name, a.value]))
                     const flowId = attrs.id
                     if (flowId && allUserData[flowId]) {
@@ -60,11 +69,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   })
                   const originUrl = window.location.href
                   
-                  // Use our proxy API endpoint instead of direct call to engine
+                  // Use our proxy API endpoint
                   const loadData = JSON.stringify({ embeddablesToLoad, originUrl })
                   const proxyUrl = '/api/embed-proxy?load=' + encodeURIComponent(loadData) + '&engine_domain=' + encodeURIComponent(engineDomain)
                   
-                  // Track loading state
                   const startTime = Date.now()
                   
                   fetch(proxyUrl)
@@ -72,13 +80,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     .then((response) => {
                       const loadTime = Date.now() - startTime
                       
-                      // Display cache status if debug mode is enabled
                       if (response._cache_meta) {
                         console.log('[Embeddables] Load source:', response._cache_meta.source)
                         console.log('[Embeddables] Load time:', loadTime + 'ms')
                         console.log('[Embeddables] Cached:', response._cache_meta.cached)
                         
-                        // Update debug panel if exists
                         window._embedCacheMeta = {
                           ...response._cache_meta,
                           loadTime
@@ -86,7 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         window.dispatchEvent(new CustomEvent('embed-loaded'))
                       }
                       
-                      // Execute the embed initialization
+                      // Execute embed initialization
                       eval('(' + response.init_js + ')(response.embeddables_data)')
                     })
                     .catch((error) => {
@@ -94,28 +100,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     })
                 }
                 
+                // Wait for DOM to be ready
                 if (document.readyState === 'loading') {
                   document.addEventListener('DOMContentLoaded', initializeEmbeddables)
                 } else {
                   initializeEmbeddables()
                 }
               }
-              
-              // Проверяем наличие обязательных параметров перед инициализацией
-              const urlParams = new URLSearchParams(window.location.search)
-              const hasRequiredParams = urlParams.has('savvy_flow_version') && window.location.hash === '#landing_main'
-              
-              // Инициализируем только если параметры уже есть
-              if (hasRequiredParams) {
-                window.initEmbeddables()
-              }
             `,
           }}
         />
       </head>
       <body>
-        <savvy id="flow_2571d52dhga9i00bfhde72a48gj"></savvy>
         {children}
+        <div 
+          id="savvy-container" 
+          dangerouslySetInnerHTML={{ 
+            __html: '<savvy id="flow_2571d52dhga9i00bfhde72a48gj"></savvy>' 
+          }} 
+        />
         <ScrollRestoration />
         <Scripts />
       </body>
