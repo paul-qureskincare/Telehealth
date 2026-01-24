@@ -7,6 +7,7 @@
 
 import type { CacheProvider } from './types';
 import { FileCacheProvider } from './providers/file-cache-provider';
+import { RedisCacheProvider } from './providers/redis-cache-provider';
 
 export type CacheProviderType = 'file' | 'redis' | 'supabase';
 
@@ -20,8 +21,7 @@ export class CacheFactory {
         return new FileCacheProvider();
       
       case 'redis':
-        // TODO: Implement Redis cache provider in the future
-        throw new Error('Redis cache provider is not implemented yet');
+        return new RedisCacheProvider();
       
       case 'supabase':
         // TODO: Implement Supabase PostgreSQL cache provider in the future
