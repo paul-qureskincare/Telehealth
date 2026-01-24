@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/home";
+import { EmbedCacheDebugPanel } from "../components/EmbedCacheDebugPanel";
+import { SavvyContainer } from "../components/SavvyContainer";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -33,25 +35,27 @@ export default function Home() {
       
       // Заменяем URL без перезагрузки страницы
       navigate(newUrl, { replace: true });
-      
-      // Переинициализируем Embed после изменения URL
-      setTimeout(() => {
-        if (window.initEmbeddables) {
-          window.initEmbeddables();
-        }
-      }, 100);
     }
   }, [searchParams, navigate]);
 
+  // Initialize Embeddables when savvy container is ready
+  const handleSavvyReady = () => {
+    const hasVersion = searchParams.has("savvy_flow_version");
+    const hasHash = window.location.hash === "#landing_main";
+
+    // Initialize only when required params are present
+    if (hasVersion && hasHash) {
+      if (window.initEmbeddables) {
+        console.log('[Home] Initializing Embeddables after savvy container ready');
+        window.initEmbeddables();
+      }
+    }
+  };
+
   return (
     <main>
+      <SavvyContainer onReady={handleSavvyReady} />
+      <EmbedCacheDebugPanel />
     </main>
   );
-}
-
-// Расширяем тип Window для TypeScript
-declare global {
-  interface Window {
-    initEmbeddables?: () => void;
-  }
 }
