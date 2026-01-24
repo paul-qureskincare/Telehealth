@@ -74,16 +74,20 @@ export class RedisCacheProvider implements CacheProvider {
   async get<T = any>(key: string): Promise<T | null> {
     try {
       const redisKey = this.getKey(key);
+      const startTime = Date.now();
       
       // Get data from Redis
       const content = await this.client.get(redisKey);
+      const fetchTime = Date.now() - startTime;
       
       if (!content) {
         return null;
       }
 
-      // Parse cache entry
+      // Parse cache entry (measure JSON.parse time)
+      const parseStart = Date.now();
       const entry: CacheEntry<T> = JSON.parse(content);
+      const parseTime = Date.now() - parseStart;
 
       // Check if expired (double-check even though Redis TTL should handle this)
       if (this.isExpired(entry)) {
@@ -91,6 +95,10 @@ export class RedisCacheProvider implements CacheProvider {
         return null;
       }
 
+      console.log(
+        `[RedisCacheProvider] Cache HIT: ${key} | Redis fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${fetchTime + parseTime}ms`
+      );
+      
       return entry.data;
     } catch (error) {
       console.error('[RedisCacheProvider] Error reading cache:', error);

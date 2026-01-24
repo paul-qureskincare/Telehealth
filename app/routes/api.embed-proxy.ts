@@ -14,6 +14,8 @@ import { cacheManager, cacheConfig } from '../services/cache';
  */
 export async function loader({ request }: Route.LoaderArgs) {
   try {
+    const totalStartTime = Date.now();
+    
     // Parse request URL to get query parameters
     const url = new URL(request.url);
     const loadParam = url.searchParams.get('load');
@@ -27,10 +29,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     const cacheKey = `embed_${engineDomain}_${Buffer.from(loadParam).toString('base64').slice(0, 50)}`;
 
     // Try to get cached data first
+    const cacheGetStartTime = Date.now();
     const cachedData = await cacheManager.get(cacheKey);
+    const cacheGetTime = Date.now() - cacheGetStartTime;
     
     if (cachedData) {
-      console.log('[EmbedProxy] Serving from cache:', cacheKey);
+      const totalTime = Date.now() - totalStartTime;
+      console.log(`[EmbedProxy] Serving from cache: ${cacheKey} | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
       
       return Response.json({
         ...cachedData,
@@ -38,34 +43,46 @@ export async function loader({ request }: Route.LoaderArgs) {
           cached: true,
           timestamp: Date.now(),
           source: 'cache',
+          cache_provider: cacheManager.getProviderType(),
+          cache_get_time: cacheGetTime,
+          total_time: totalTime,
         },
       });
     }
 
     // If no cache, fetch from native Embed API
-    console.log('[EmbedProxy] Fetching from native Embed:', engineDomain);
+    console.log(`[EmbedProxy] Cache miss, fetching from native Embed: ${engineDomain} | Cache get time: ${cacheGetTime}ms`);
     
     const urlRoot = engineDomain.startsWith('http') ? engineDomain : `https://${engineDomain}`;
     const embedUrl = `${urlRoot}/init?load=${encodeURIComponent(loadParam)}`;
 
+    const fetchStartTime = Date.now();
     const embedResponse = await fetch(embedUrl, {
       signal: request.signal,
       headers: {
         'User-Agent': 'Qure-Telehealth-Proxy/1.0',
       },
     });
+    const fetchTime = Date.now() - fetchStartTime;
 
     if (!embedResponse.ok) {
       throw new Error(`Embed API returned ${embedResponse.status}`);
     }
 
+    const parseStartTime = Date.now();
     const embedData = await embedResponse.json();
+    const parseTime = Date.now() - parseStartTime;
 
     // Save to cache if caching is enabled
     if (cacheManager.isEnabled()) {
+      const cacheSaveStartTime = Date.now();
       await cacheManager.set(cacheKey, embedData);
-      console.log('[EmbedProxy] Saved to cache:', cacheKey);
+      const cacheSaveTime = Date.now() - cacheSaveStartTime;
+      console.log(`[EmbedProxy] Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
     }
+
+    const totalTime = Date.now() - totalStartTime;
+    console.log(`[EmbedProxy] Native fetch completed | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
 
     // Return response with cache metadata
     return Response.json({
@@ -75,6 +92,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         timestamp: Date.now(),
         source: 'native',
         cache_enabled: cacheConfig.enabled,
+        cache_provider: cacheManager.getProviderType(),
+        cache_get_time: cacheGetTime,
+        api_fetch_time: fetchTime,
+        json_parse_time: parseTime,
+        total_time: totalTime,
       },
     });
 

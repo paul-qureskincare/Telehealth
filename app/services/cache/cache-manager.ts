@@ -14,10 +14,12 @@ export class CacheManager {
   private provider: CacheProvider;
   private enabled: boolean;
   private ttl: number;
+  private providerType: 'file' | 'redis' | 'supabase';
 
   constructor() {
     this.enabled = cacheConfig.enabled;
     this.ttl = cacheConfig.ttl;
+    this.providerType = cacheConfig.provider;
     this.provider = CacheFactory.createProvider(cacheConfig.provider);
 
     // Initialize cache monitor
@@ -29,6 +31,13 @@ export class CacheManager {
    */
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Get the current cache provider type
+   */
+  getProviderType(): 'file' | 'redis' | 'supabase' {
+    return this.providerType;
   }
 
   /**

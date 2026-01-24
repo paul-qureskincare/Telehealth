@@ -92,3 +92,12 @@ export const cacheConfig: CacheConfig = {
   // Save cache to monitoring directory (default: false)
   save: getEnvBoolean('CACHE_SAVE', false),
 };
+
+// Log cache configuration at startup
+console.log('[CacheConfig]', {
+  enabled: cacheConfig.enabled,
+  provider: cacheConfig.provider,
+  ttl: cacheConfig.ttl,
+  debug: cacheConfig.debug,
+  save: cacheConfig.save,
+});
