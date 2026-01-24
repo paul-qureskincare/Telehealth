@@ -14,13 +14,23 @@ interface CacheMeta {
   source: 'cache' | 'native';
   loadTime: number;
   cache_enabled?: boolean;
+  cache_provider?: 'file' | 'redis' | 'supabase';
+  cache_get_time?: number;
+  total_time?: number;
+  api_fetch_time?: number;
+  json_parse_time?: number;
 }
 
 export function EmbedCacheDebugPanel() {
   const [cacheMeta, setCacheMeta] = useState<CacheMeta | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [debugEnabled, setDebugEnabled] = useState(false);
 
   useEffect(() => {
+    // Check if CACHE_DEBUG is enabled from window global
+    const debugFlag = (window as any).__CACHE_DEBUG__ === 'true' || (window as any).__CACHE_DEBUG__ === true;
+    setDebugEnabled(debugFlag);
+
     // Listen for embed loaded event
     const handleEmbedLoaded = () => {
       if (window._embedCacheMeta) {
@@ -40,7 +50,7 @@ export function EmbedCacheDebugPanel() {
     };
   }, []);
 
-  if (!cacheMeta || !isVisible) {
+  if (!cacheMeta || !isVisible || !debugEnabled) {
     return null;
   }
 
@@ -75,6 +85,13 @@ export function EmbedCacheDebugPanel() {
         </div>
 
         <div className="flex items-center justify-between">
+          <span className="text-gray-300">Cache Type:</span>
+          <span className="font-mono text-blue-400">
+            {cacheMeta.cache_provider?.toUpperCase() || 'unknown'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
           <span className="text-gray-300">Load Time:</span>
           <span className="font-mono text-green-400">{cacheMeta.loadTime}ms</span>
         </div>
@@ -88,6 +105,18 @@ export function EmbedCacheDebugPanel() {
 
         <div className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-700">
           <div>Timestamp: {new Date(cacheMeta.timestamp).toLocaleTimeString()}</div>
+          {cacheMeta.cache_get_time !== undefined && (
+            <div>Cache Get Time: {cacheMeta.cache_get_time}ms</div>
+          )}
+          {cacheMeta.api_fetch_time !== undefined && (
+            <div>API Fetch Time: {cacheMeta.api_fetch_time}ms</div>
+          )}
+          {cacheMeta.json_parse_time !== undefined && (
+            <div>JSON Parse Time: {cacheMeta.json_parse_time}ms</div>
+          )}
+          {cacheMeta.total_time !== undefined && (
+            <div className="font-semibold mt-1">Total Time: {cacheMeta.total_time}ms</div>
+          )}
         </div>
       </div>
 

@@ -34,6 +34,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Set CACHE_DEBUG flag from environment
+              window.__CACHE_DEBUG__ = '${import.meta.env.VITE_CACHE_DEBUG || 'false'}';
+              
               // Define initEmbeddables function globally but don't auto-execute
               window.initEmbeddables = () => {
                 const engineDomain = new URL(window.location.href).searchParams.get('embeddables_engine_domain') || 'engine.embeddables.com'

@@ -8,16 +8,22 @@
 import { cacheConfig } from '../../config/cache.config';
 import { CacheFactory } from './cache-factory';
 import type { CacheProvider } from './types';
+import { initializeCacheMonitor } from './monitor-cache';
 
 export class CacheManager {
   private provider: CacheProvider;
   private enabled: boolean;
   private ttl: number;
+  private providerType: 'file' | 'redis' | 'supabase';
 
   constructor() {
     this.enabled = cacheConfig.enabled;
     this.ttl = cacheConfig.ttl;
+    this.providerType = cacheConfig.provider;
     this.provider = CacheFactory.createProvider(cacheConfig.provider);
+
+    // Initialize cache monitor - saves to /cache/file/ or /cache/redis/ based on CACHE_SAVE setting
+    initializeCacheMonitor(cacheConfig.save);
   }
 
   /**
@@ -25,6 +31,13 @@ export class CacheManager {
    */
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Get the current cache provider type
+   */
+  getProviderType(): 'file' | 'redis' | 'supabase' {
+    return this.providerType;
   }
 
   /**
