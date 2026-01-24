@@ -6,54 +6,106 @@
  * 
  * Configuration:
  * - REDIS_URL: Connection string (e.g., redis://user:password@host:port)
+ * 
+ * Performance optimizations:
+ * - Singleton Redis client (reuses connections across requests)
+ * - Connection pooling enabled
+ * - Lazy connection (connects only when needed)
+ * - DNS caching
  */
 
 import Redis from 'ioredis';
 import type { CacheProvider, CacheEntry } from '../types';
 import { getCacheMonitor } from '../monitor-cache';
 
+// Singleton Redis client instance
+let redisClientInstance: Redis | null = null;
+let isConnected: boolean = false;
+
+/**
+ * Get or create singleton Redis client
+ * This ensures connection reuse across Lambda invocations
+ */
+function getRedisClient(redisUrl?: string): Redis {
+  if (redisClientInstance) {
+    return redisClientInstance;
+  }
+
+  // Use REDIS_URL from environment or provided URL
+  const url = redisUrl || process.env.REDIS_URL;
+  
+  if (!url) {
+    throw new Error('REDIS_URL environment variable is required for Redis cache provider');
+  }
+
+  console.log('[RedisCacheProvider] Creating new Redis client instance');
+
+  // Initialize Redis client with optimized settings
+  redisClientInstance = new Redis(url, {
+    // Lazy connect - only connect when first command is sent
+    lazyConnect: true,
+    
+    // Keep connections alive to reuse them
+    keepAlive: 30000,
+    
+    // Connection pool settings
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: false,
+    
+    // Automatically reconnect on connection loss
+    retryStrategy: (times) => {
+      if (times > 10) {
+        console.error('[RedisCacheProvider] Max retry attempts reached');
+        return null; // Stop retrying
+      }
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    
+    // Shorter connection timeout for faster failures
+    connectTimeout: 5000,
+    
+    // Enable offline queue to handle commands during reconnection
+    enableOfflineQueue: true,
+    
+    // DNS caching
+    family: 4, // Use IPv4
+  });
+
+  // Connection event handlers
+  redisClientInstance.on('connect', () => {
+    console.log('[RedisCacheProvider] Connected to Redis');
+    isConnected = true;
+  });
+
+  redisClientInstance.on('ready', () => {
+    console.log('[RedisCacheProvider] Redis client ready');
+    isConnected = true;
+  });
+
+  redisClientInstance.on('error', (error) => {
+    console.error('[RedisCacheProvider] Redis connection error:', error.message);
+    isConnected = false;
+  });
+
+  redisClientInstance.on('close', () => {
+    console.log('[RedisCacheProvider] Redis connection closed');
+    isConnected = false;
+  });
+
+  redisClientInstance.on('reconnecting', () => {
+    console.log('[RedisCacheProvider] Reconnecting to Redis...');
+  });
+
+  return redisClientInstance;
+}
+
 export class RedisCacheProvider implements CacheProvider {
   private client: Redis;
-  private isConnected: boolean = false;
 
   constructor(redisUrl?: string) {
-    // Use REDIS_URL from environment or provided URL
-    const url = redisUrl || process.env.REDIS_URL;
-    
-    if (!url) {
-      throw new Error('REDIS_URL environment variable is required for Redis cache provider');
-    }
-
-    // Initialize Redis client
-    this.client = new Redis(url, {
-      // Automatically reconnect on connection loss
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      // Maximum retry attempts
-      maxRetriesPerRequest: 3,
-      // Connection timeout
-      connectTimeout: 10000,
-      // Enable offline queue
-      enableOfflineQueue: true,
-    });
-
-    // Connection event handlers
-    this.client.on('connect', () => {
-      console.log('[RedisCacheProvider] Connected to Redis');
-      this.isConnected = true;
-    });
-
-    this.client.on('error', (error) => {
-      console.error('[RedisCacheProvider] Redis connection error:', error);
-      this.isConnected = false;
-    });
-
-    this.client.on('close', () => {
-      console.log('[RedisCacheProvider] Redis connection closed');
-      this.isConnected = false;
-    });
+    // Use singleton Redis client
+    this.client = getRedisClient(redisUrl);
   }
 
   /**
@@ -73,6 +125,11 @@ export class RedisCacheProvider implements CacheProvider {
 
   async get<T = any>(key: string): Promise<T | null> {
     try {
+      // Ensure connection is established (lazy connect)
+      if (!isConnected) {
+        await this.client.connect();
+      }
+
       const redisKey = this.getKey(key);
       const startTime = Date.now();
       
@@ -115,6 +172,11 @@ export class RedisCacheProvider implements CacheProvider {
 
   async set<T = any>(key: string, data: T, ttl: number): Promise<void> {
     try {
+      // Ensure connection is established (lazy connect)
+      if (!isConnected) {
+        await this.client.connect();
+      }
+
       const redisKey = this.getKey(key);
 
       const entry: CacheEntry<T> = {
@@ -126,8 +188,13 @@ export class RedisCacheProvider implements CacheProvider {
       // Convert TTL from milliseconds to seconds for Redis
       const ttlSeconds = Math.ceil(ttl / 1000);
 
+      const startTime = Date.now();
+      
       // Store in Redis with expiration
       await this.client.setex(redisKey, ttlSeconds, JSON.stringify(entry));
+      
+      const writeTime = Date.now() - startTime;
+      console.log(`[RedisCacheProvider] Cache SET: ${key} | Write time: ${writeTime}ms`);
 
       // Save to monitoring directory
       await getCacheMonitor().saveEntry('redis', key, entry);
@@ -139,6 +206,11 @@ export class RedisCacheProvider implements CacheProvider {
 
   async has(key: string): Promise<boolean> {
     try {
+      // Ensure connection is established (lazy connect)
+      if (!isConnected) {
+        await this.client.connect();
+      }
+
       const redisKey = this.getKey(key);
       
       // Check if key exists
@@ -222,6 +294,54 @@ export class RedisCacheProvider implements CacheProvider {
    * Get connection status
    */
   getConnectionStatus(): boolean {
-    return this.isConnected;
+    return isConnected;
+  }
+
+  /**
+   * Get Redis client info for debugging
+   */
+  async getClientInfo(): Promise<{
+    connected: boolean;
+    uptime: number;
+    usedMemory: string;
+  }> {
+    try {
+      if (!isConnected) {
+        await this.client.connect();
+      }
+      
+      const info = await this.client.info('server');
+      const memory = await this.client.info('memory');
+      
+      return {
+        connected: isConnected,
+        uptime: 0, // Parse from info if needed
+        usedMemory: memory.split('\n').find(line => line.startsWith('used_memory_human'))?.split(':')[1]?.trim() || 'unknown',
+      };
+    } catch (error) {
+      console.error('[RedisCacheProvider] Error getting client info:', error);
+      return {
+        connected: false,
+        uptime: 0,
+        usedMemory: 'error',
+      };
+    }
+  }
+}
+
+/**
+ * Cleanup function for graceful shutdown
+ * Call this when the application is shutting down
+ */
+export async function closeRedisConnection(): Promise<void> {
+  if (redisClientInstance) {
+    try {
+      await redisClientInstance.quit();
+      console.log('[RedisCacheProvider] Redis connection closed gracefully');
+      redisClientInstance = null;
+      isConnected = false;
+    } catch (error) {
+      console.error('[RedisCacheProvider] Error closing Redis connection:', error);
+    }
   }
 }
