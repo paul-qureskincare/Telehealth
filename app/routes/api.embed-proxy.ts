@@ -1,7 +1,5 @@
-import fs from "fs/promises";
-import path from "path";
 import type { Route } from "./+types/api.embed-proxy";
-import { CACHE_DIR, TTL_MS, ensureCacheDir, isCacheValid } from "../utils/cache.server";
+import { TTL_MS, getCached, setCached, isCacheValid } from "../utils/cache.server";
 
 type LoadPayload = {
   embeddablesToLoad?: Array<{ id?: string }>;
@@ -10,24 +8,8 @@ type LoadPayload = {
 const DEFAULT_ENGINE_DOMAIN = "engine.embeddables.com";
 
 function sanitizeCacheKey(value: string) {
-  // Replace unsafe characters to keep filesystem paths stable.
+  // Replace unsafe characters to keep cache keys stable.
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
-
-function formatDateForCache(): string {
-  // Format: yyyy-mm-dd-HH to avoid special characters in filenames
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const date = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  
-  return `${year}-${month}-${date}-${hours}`;
-}
-
-function buildExternalUrl(loadParam: string, engineDomain: string) {
-  const urlRoot = engineDomain.startsWith("http") ? engineDomain : `https://${engineDomain}`;
-  return `${urlRoot}/init?load=${encodeURIComponent(loadParam)}`;
 }
 
 function tryExtractFlowId(loadParam: string | null): string | null {
@@ -44,6 +26,11 @@ function tryExtractFlowId(loadParam: string | null): string | null {
   }
 }
 
+function buildExternalUrl(loadParam: string, engineDomain: string) {
+  const urlRoot = engineDomain.startsWith("http") ? engineDomain : `https://${engineDomain}`;
+  return `${urlRoot}/init?load=${encodeURIComponent(loadParam)}`;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const loadParam = url.searchParams.get("load");
@@ -54,22 +41,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     return Response.json({ error: "Missing flowId" }, { status: 400 });
   }
 
-  await ensureCacheDir();
+  // Generate cache key from flowId
   const safeFlowId = sanitizeCacheKey(flowId);
-  const datePrefix = formatDateForCache();
-  const cacheFile = path.join(CACHE_DIR, `${datePrefix}_${safeFlowId}.json`);
-  const cacheValid = await isCacheValid(cacheFile, TTL_MS);
+  const cacheKey = `embed_${safeFlowId}`;
 
-  if (cacheValid) {
-    const cached = await fs.readFile(cacheFile, "utf-8");
-    const data = JSON.parse(cached);
-    return Response.json({ ...data, _cacheStatus: { fromCache: true, timestamp: Date.now() } });
+  // Check if we have valid cached data
+  if (isCacheValid(cacheKey)) {
+    const cached = getCached(cacheKey);
+    return Response.json({ ...cached, _cacheStatus: { fromCache: true, timestamp: Date.now() } });
   }
 
   if (!loadParam) {
     return Response.json({ error: "Missing load payload" }, { status: 400 });
   }
 
+  // Fetch from external API
   const externalUrl = buildExternalUrl(loadParam, engineDomain);
   const response = await fetch(externalUrl);
 
@@ -81,6 +67,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const data = await response.json();
-  await fs.writeFile(cacheFile, JSON.stringify(data), "utf-8");
+  
+  // Store in cache
+  setCached(cacheKey, data, TTL_MS);
+  
   return Response.json({ ...data, _cacheStatus: { fromCache: false, timestamp: Date.now() } });
 }
