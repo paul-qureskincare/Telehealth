@@ -19,6 +19,7 @@ interface CacheMeta {
   total_time?: number;
   api_fetch_time?: number;
   json_parse_time?: number;
+  cache_size_kb?: number;
 }
 
 export function EmbedCacheDebugPanel() {
@@ -95,6 +96,13 @@ export function EmbedCacheDebugPanel() {
           <span className="text-gray-300">Load Time:</span>
           <span className="font-mono text-green-400">{cacheMeta.loadTime}ms</span>
         </div>
+
+        {cacheMeta.cache_size_kb !== undefined && (
+          <div className="flex items-center justify-between">
+            <span className="text-gray-300">Data Size:</span>
+            <span className="font-mono text-yellow-400">{cacheMeta.cache_size_kb} KB</span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <span className="text-gray-300">Cache Enabled:</span>

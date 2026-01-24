@@ -42,7 +42,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     
     if (cachedData) {
       const totalTime = Date.now() - totalStartTime;
-      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey} | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
+      
+      // Calculate cache size in KB
+      const cacheDataString = JSON.stringify(cachedData);
+      const cacheSizeBytes = Buffer.byteLength(cacheDataString, 'utf-8');
+      const cacheSizeKB = Math.round(cacheSizeBytes / 1024);
+      
+      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey} | Size: ${cacheSizeKB} KB | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
       
       return Response.json({
         ...cachedData,
@@ -53,6 +59,7 @@ export async function loader({ request }: Route.LoaderArgs) {
           cache_provider: cacheManager.getProviderType(),
           cache_get_time: cacheGetTime,
           total_time: totalTime,
+          cache_size_kb: cacheSizeKB,
         },
       }, {
         headers: {
@@ -101,7 +108,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
 
     const totalTime = Date.now() - totalStartTime;
-    console.log(`[EmbedProxy] ✅ Native fetch completed | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
+    
+    // Calculate data size in KB
+    const dataString = JSON.stringify(embedData);
+    const dataSizeBytes = Buffer.byteLength(dataString, 'utf-8');
+    const dataSizeKB = Math.round(dataSizeBytes / 1024);
+    
+    console.log(`[EmbedProxy] ✅ Native fetch completed | Size: ${dataSizeKB} KB | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
 
     // Return response with cache metadata and no-cache headers
     return Response.json({
@@ -116,6 +129,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         api_fetch_time: fetchTime,
         json_parse_time: parseTime,
         total_time: totalTime,
+        cache_size_kb: dataSizeKB,
       },
     }, {
       headers: {

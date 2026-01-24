@@ -13,6 +13,7 @@ declare global {
       source: 'cache' | 'native';
       loadTime: number;
       cache_enabled?: boolean;
+      cache_size_kb?: number;
     };
   }
 }
