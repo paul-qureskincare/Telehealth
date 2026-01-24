@@ -5,48 +5,20 @@
  * It caches the response from the native Embed API to improve performance and
  * reduce load on the external service.
  * 
- * HTTP Compression:
- * - Automatically compresses responses with gzip
- * - Reduces network transfer time by 80-90%
- * - Browser automatically decompresses
+ * Caching Strategy:
+ * 1. Server-side cache (Redis/File) - fast data retrieval
+ * 2. CDN Edge cache (Vercel) - eliminates Lambda calls
+ * 3. Browser cache - instant page loads
+ * 
+ * Performance:
+ * - First request: ~1000ms (fetch from API)
+ * - Cached on server: ~200ms (Lambda + Redis)
+ * - Cached on CDN: ~50-100ms (Edge only)
+ * - Cached in browser: ~0ms (instant)
  */
 
 import type { Route } from './+types/api.embed-proxy';
 import { cacheManager, cacheConfig } from '../services/cache';
-import { gzip } from 'zlib';
-import { promisify } from 'util';
-
-const gzipAsync = promisify(gzip);
-
-/**
- * Helper function to create compressed JSON response
- */
-async function createCompressedResponse(data: any, headers: Record<string, string> = {}) {
-  const jsonString = JSON.stringify(data);
-  const uncompressedSize = Buffer.byteLength(jsonString, 'utf-8');
-  
-  // Compress the JSON string
-  const compressStart = Date.now();
-  const compressed = await gzipAsync(Buffer.from(jsonString, 'utf-8'));
-  const compressTime = Date.now() - compressStart;
-  const compressedSize = compressed.length;
-  
-  const compressionRatio = ((1 - compressedSize / uncompressedSize) * 100).toFixed(1);
-  
-  console.log(
-    `[EmbedProxy] 🗜️  HTTP Compression: ${(uncompressedSize / 1024).toFixed(1)} KB → ${(compressedSize / 1024).toFixed(1)} KB (${compressionRatio}% saved) in ${compressTime}ms`
-  );
-  
-  return new Response(compressed, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Encoding': 'gzip',
-      'Content-Length': compressedSize.toString(),
-      ...headers,
-    },
-  });
-}
 
 /**
  * Loader function that handles GET requests to proxy Embeddables API
@@ -99,8 +71,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       console.log(`[EmbedProxy]   - Network time: ${networkTime}ms`);
       console.log(`[EmbedProxy]   - Total time: ${totalTime}ms`);
       
-      // Return compressed response with HTTP gzip
-      return createCompressedResponse({
+      // Return response with CDN caching headers
+      // Vercel Edge will cache this response and serve it directly without Lambda
+      return Response.json({
         ...cachedData,
         _cache_meta: {
           cached: true,
@@ -116,9 +89,16 @@ export async function loader({ request }: Route.LoaderArgs) {
           is_compressed: metadata.isCompressed,
         },
       }, {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        headers: {
+          // CDN Edge caching - cache for 1 hour, serve stale for 24 hours while revalidating
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+          // Vercel-specific CDN cache control
+          'CDN-Cache-Control': 'public, max-age=3600',
+          // Tell Vercel to cache this at the Edge
+          'Vercel-CDN-Cache-Control': 'max-age=3600',
+          // Vary header to cache different versions based on query params
+          'Vary': 'Accept-Encoding',
+        },
       });
     }
 
@@ -172,8 +152,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     
     console.log(`[EmbedProxy] ✅ Native fetch completed | Size: ${dataSizeKB} KB | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Cache save: ${cacheSaveTime}ms | Network overhead: ${networkOverhead}ms | Total: ${totalTime}ms`);
 
-    // Return compressed response with HTTP gzip and cache metadata
-    return createCompressedResponse({
+    // Return response with short CDN cache (will be cached after first request)
+    return Response.json({
       ...embedData,
       _cache_meta: {
         cached: false,
@@ -190,9 +170,13 @@ export async function loader({ request }: Route.LoaderArgs) {
         cache_size_kb: dataSizeKB,
       },
     }, {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      headers: {
+        // Short CDN cache for native fetches (10 seconds)
+        // This allows quick revalidation while still benefiting from CDN
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=3600',
+        'CDN-Cache-Control': 'public, max-age=10',
+        'Vary': 'Accept-Encoding',
+      },
     });
 
   } catch (error) {
