@@ -19,8 +19,13 @@ interface CacheMeta {
 export function EmbedCacheDebugPanel() {
   const [cacheMeta, setCacheMeta] = useState<CacheMeta | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [debugEnabled, setDebugEnabled] = useState(false);
 
   useEffect(() => {
+    // Check if CACHE_DEBUG is enabled from window global
+    const debugFlag = (window as any).__CACHE_DEBUG__ === 'true' || (window as any).__CACHE_DEBUG__ === true;
+    setDebugEnabled(debugFlag);
+
     // Listen for embed loaded event
     const handleEmbedLoaded = () => {
       if (window._embedCacheMeta) {
@@ -40,7 +45,7 @@ export function EmbedCacheDebugPanel() {
     };
   }, []);
 
-  if (!cacheMeta || !isVisible) {
+  if (!cacheMeta || !isVisible || !debugEnabled) {
     return null;
   }
 
