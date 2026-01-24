@@ -10,8 +10,13 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { CacheEntry } from './types';
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class CacheMonitor {
   private isEnabled: boolean;

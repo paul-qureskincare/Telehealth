@@ -99,6 +99,9 @@ export class RedisCacheProvider implements CacheProvider {
         `[RedisCacheProvider] Cache HIT: ${key} | Redis fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${fetchTime + parseTime}ms`
       );
       
+      // Save to monitoring directory when cache is hit
+      await getCacheMonitor().saveEntry('redis', key, entry);
+      
       return entry.data;
     } catch (error) {
       console.error('[RedisCacheProvider] Error reading cache:', error);
