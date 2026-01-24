@@ -17,21 +17,29 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Always ensure we have the required parameters
+    // Проверяем наличие обязательных параметров
     const hasVersion = searchParams.has("savvy_flow_version");
-    const currentHash = window.location.hash;
+    const hasHash = window.location.hash === "#landing_main";
 
-    // If parameters are missing or hash is missing, set them
-    if (!hasVersion || currentHash !== "#landing_main") {
+    // Если параметров нет, добавляем их
+    if (!hasVersion || !hasHash) {
       const newSearchParams = new URLSearchParams(searchParams);
       
       if (!hasVersion) {
         newSearchParams.set("savvy_flow_version", "latest");
       }
 
-      // Use window.history to set URL with hash since navigate() doesn't handle hashes well
-      const newUrl = `/?${newSearchParams.toString()}#landing_main`;
-      window.history.replaceState(null, "", newUrl);
+      const newUrl = `?${newSearchParams.toString()}#landing_main`;
+      
+      // Заменяем URL без перезагрузки страницы
+      navigate(newUrl, { replace: true });
+      
+      // Переинициализируем Embed после изменения URL
+      setTimeout(() => {
+        if (window.initEmbeddables) {
+          window.initEmbeddables();
+        }
+      }, 100);
     }
   }, [searchParams, navigate]);
 
