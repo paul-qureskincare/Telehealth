@@ -34,15 +34,31 @@ export async function loader({ request }: Route.LoaderArgs) {
     const cacheKey = `embed_${engineDomain}_${Buffer.from(loadParam).toString('base64').slice(0, 50)}`;
     console.log('[EmbedProxy] cacheKey:', cacheKey);
 
-    // Try to get cached data first
+    // Try to get cached data first with metadata
     console.log('[EmbedProxy] Checking cache...');
     const cacheGetStartTime = Date.now();
-    const cachedData = await cacheManager.get(cacheKey);
+    const cachedResult = await cacheManager.getWithMeta(cacheKey);
     const cacheGetTime = Date.now() - cacheGetStartTime;
     
-    if (cachedData) {
+    if (cachedResult) {
       const totalTime = Date.now() - totalStartTime;
-      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey} | Cache get: ${cacheGetTime}ms | Total: ${totalTime}ms`);
+      const { data: cachedData, metadata } = cachedResult;
+      
+      // Calculate sizes in KB
+      const uncompressedKB = Math.round(metadata.uncompressedSize / 1024);
+      const compressedKB = metadata.compressedSize ? Math.round(metadata.compressedSize / 1024) : undefined;
+      
+      // Calculate remaining time (network, request setup, etc)
+      const networkTime = totalTime - cacheGetTime;
+      
+      console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey}`);
+      console.log(`[EmbedProxy]   - Uncompressed size: ${uncompressedKB} KB`);
+      if (compressedKB) {
+        console.log(`[EmbedProxy]   - Compressed size: ${compressedKB} KB (${metadata.compressionRatio?.toFixed(1)}% saved)`);
+      }
+      console.log(`[EmbedProxy]   - Cache fetch time: ${cacheGetTime}ms`);
+      console.log(`[EmbedProxy]   - Network time: ${networkTime}ms`);
+      console.log(`[EmbedProxy]   - Total time: ${totalTime}ms`);
       
       return Response.json({
         ...cachedData,
@@ -52,7 +68,12 @@ export async function loader({ request }: Route.LoaderArgs) {
           source: 'cache',
           cache_provider: cacheManager.getProviderType(),
           cache_get_time: cacheGetTime,
+          network_time: networkTime,
           total_time: totalTime,
+          uncompressed_size_kb: uncompressedKB,
+          compressed_size_kb: compressedKB,
+          compression_ratio: metadata.compressionRatio,
+          is_compressed: metadata.isCompressed,
         },
       }, {
         headers: {
@@ -87,21 +108,31 @@ export async function loader({ request }: Route.LoaderArgs) {
     const parseStartTime = Date.now();
     const embedData = await embedResponse.json();
     const parseTime = Date.now() - parseStartTime;
-    console.log('[EmbedProxy] Parsed response, now saving to cache...');
+    console.log('[EmbedProxy] ✅ Parsed response from Embed API');
 
     // Save to cache if caching is enabled
+    let cacheSaveTime = 0;
     if (cacheManager.isEnabled()) {
-      console.log('[EmbedProxy] cacheManager.isEnabled() = true, calling set()...');
+      console.log('[EmbedProxy] 💾 Saving to cache...');
       const cacheSaveStartTime = Date.now();
       await cacheManager.set(cacheKey, embedData);
-      const cacheSaveTime = Date.now() - cacheSaveStartTime;
+      cacheSaveTime = Date.now() - cacheSaveStartTime;
       console.log(`[EmbedProxy] ✅ Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
     } else {
-      console.log('[EmbedProxy] Caching is disabled');
+      console.log('[EmbedProxy] ⚠️  Caching is disabled');
     }
 
     const totalTime = Date.now() - totalStartTime;
-    console.log(`[EmbedProxy] ✅ Native fetch completed | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
+    
+    // Calculate data size in KB
+    const dataString = JSON.stringify(embedData);
+    const dataSizeBytes = Buffer.byteLength(dataString, 'utf-8');
+    const dataSizeKB = Math.round(dataSizeBytes / 1024);
+    
+    // Calculate network overhead (request setup, response streaming, etc)
+    const networkOverhead = totalTime - fetchTime - parseTime - cacheSaveTime;
+    
+    console.log(`[EmbedProxy] ✅ Native fetch completed | Size: ${dataSizeKB} KB | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Cache save: ${cacheSaveTime}ms | Network overhead: ${networkOverhead}ms | Total: ${totalTime}ms`);
 
     // Return response with cache metadata and no-cache headers
     return Response.json({
@@ -112,10 +143,13 @@ export async function loader({ request }: Route.LoaderArgs) {
         source: 'native',
         cache_enabled: cacheConfig.enabled,
         cache_provider: cacheManager.getProviderType(),
-        cache_get_time: cacheGetTime,
+        cache_check_time: cacheGetTime,
         api_fetch_time: fetchTime,
         json_parse_time: parseTime,
+        cache_save_time: cacheSaveTime,
+        network_overhead: networkOverhead,
         total_time: totalTime,
+        cache_size_kb: dataSizeKB,
       },
     }, {
       headers: {

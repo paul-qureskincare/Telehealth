@@ -84,12 +84,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       const loadTime = Date.now() - startTime
                       
                       if (response._cache_meta) {
-                        console.log('[Embeddables] Load source:', response._cache_meta.source)
+                        const meta = response._cache_meta
+                        const source = meta.source === 'cache' ? '⚡ CACHE' : '🌐 NATIVE'
+                        
+                        console.log('[Embeddables] Load source:', source)
                         console.log('[Embeddables] Load time:', loadTime + 'ms')
-                        console.log('[Embeddables] Cached:', response._cache_meta.cached)
+                        
+                        // Log data size (prefer compressed size if available)
+                        if (meta.compressed_size_kb && meta.is_compressed) {
+                          console.log('[Embeddables] Data size (compressed):', meta.compressed_size_kb + ' KB')
+                          console.log('[Embeddables] Data size (uncompressed):', meta.uncompressed_size_kb + ' KB')
+                          console.log('[Embeddables] Compression ratio:', meta.compression_ratio?.toFixed(1) + '% saved')
+                        } else if (meta.uncompressed_size_kb) {
+                          console.log('[Embeddables] Data size:', meta.uncompressed_size_kb + ' KB')
+                        } else if (meta.cache_size_kb) {
+                          console.log('[Embeddables] Data size:', meta.cache_size_kb + ' KB')
+                        }
+                        
+                        // Log breakdown for native fetches
+                        if (meta.source === 'native') {
+                          console.log('[Embeddables] Performance breakdown:')
+                          console.log('  - Cache check:', meta.cache_check_time + 'ms')
+                          console.log('  - API fetch:', meta.api_fetch_time + 'ms')
+                          console.log('  - JSON parse:', meta.json_parse_time + 'ms')
+                          if (meta.cache_save_time > 0) {
+                            console.log('  - Cache save:', meta.cache_save_time + 'ms')
+                          }
+                          if (meta.network_overhead > 0) {
+                            console.log('  - Network overhead:', meta.network_overhead + 'ms')
+                          }
+                        } else if (meta.source === 'cache') {
+                          console.log('[Embeddables] Performance breakdown:')
+                          console.log('  - Cache retrieval:', meta.cache_get_time + 'ms')
+                          console.log('  - Network time:', meta.network_time + 'ms')
+                        }
                         
                         window._embedCacheMeta = {
-                          ...response._cache_meta,
+                          ...meta,
                           loadTime
                         }
                         window.dispatchEvent(new CustomEvent('embed-loaded'))
