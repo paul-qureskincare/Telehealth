@@ -48,9 +48,13 @@ export async function loader({ request }: Route.LoaderArgs) {
       const cacheSizeBytes = Buffer.byteLength(cacheDataString, 'utf-8');
       const cacheSizeKB = Math.round(cacheSizeBytes / 1024);
       
+      // Calculate remaining time (network, request setup, etc)
+      const networkTime = totalTime - cacheGetTime;
+      
       console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey}`);
       console.log(`[EmbedProxy]   - Response size: ${cacheSizeKB} KB`);
       console.log(`[EmbedProxy]   - Cache fetch time: ${cacheGetTime}ms`);
+      console.log(`[EmbedProxy]   - Network time: ${networkTime}ms`);
       console.log(`[EmbedProxy]   - Total time: ${totalTime}ms`);
       
       return Response.json({
@@ -61,6 +65,7 @@ export async function loader({ request }: Route.LoaderArgs) {
           source: 'cache',
           cache_provider: cacheManager.getProviderType(),
           cache_get_time: cacheGetTime,
+          network_time: networkTime,
           total_time: totalTime,
           cache_size_kb: cacheSizeKB,
         },
@@ -100,11 +105,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     console.log('[EmbedProxy] ✅ Parsed response from Embed API');
 
     // Save to cache if caching is enabled
+    let cacheSaveTime = 0;
     if (cacheManager.isEnabled()) {
       console.log('[EmbedProxy] 💾 Saving to cache...');
       const cacheSaveStartTime = Date.now();
       await cacheManager.set(cacheKey, embedData);
-      const cacheSaveTime = Date.now() - cacheSaveStartTime;
+      cacheSaveTime = Date.now() - cacheSaveStartTime;
       console.log(`[EmbedProxy] ✅ Saved to cache: ${cacheKey} | Save time: ${cacheSaveTime}ms`);
     } else {
       console.log('[EmbedProxy] ⚠️  Caching is disabled');
@@ -117,7 +123,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     const dataSizeBytes = Buffer.byteLength(dataString, 'utf-8');
     const dataSizeKB = Math.round(dataSizeBytes / 1024);
     
-    console.log(`[EmbedProxy] ✅ Native fetch completed | Size: ${dataSizeKB} KB | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Total: ${totalTime}ms`);
+    // Calculate network overhead (request setup, response streaming, etc)
+    const networkOverhead = totalTime - fetchTime - parseTime - cacheSaveTime;
+    
+    console.log(`[EmbedProxy] ✅ Native fetch completed | Size: ${dataSizeKB} KB | API fetch: ${fetchTime}ms | JSON parse: ${parseTime}ms | Cache save: ${cacheSaveTime}ms | Network overhead: ${networkOverhead}ms | Total: ${totalTime}ms`);
 
     // Return response with cache metadata and no-cache headers
     return Response.json({
@@ -128,9 +137,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         source: 'native',
         cache_enabled: cacheConfig.enabled,
         cache_provider: cacheManager.getProviderType(),
-        cache_get_time: cacheGetTime,
+        cache_check_time: cacheGetTime,
         api_fetch_time: fetchTime,
         json_parse_time: parseTime,
+        cache_save_time: cacheSaveTime,
+        network_overhead: networkOverhead,
         total_time: totalTime,
         cache_size_kb: dataSizeKB,
       },
