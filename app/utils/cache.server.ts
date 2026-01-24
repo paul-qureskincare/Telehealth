@@ -1,7 +1,16 @@
 import fs from "fs/promises";
 import path from "path";
 
-export const CACHE_DIR = path.join(process.cwd(), ".cache");
+// Use /tmp on Vercel (Lambda environment), otherwise use .cache in current directory
+const getCacheDir = () => {
+  // Check if running in AWS Lambda/Vercel environment
+  if (process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL) {
+    return path.join("/tmp", ".cache");
+  }
+  return path.join(process.cwd(), ".cache");
+};
+
+export const CACHE_DIR = getCacheDir();
 export const TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function ensureCacheDir() {
