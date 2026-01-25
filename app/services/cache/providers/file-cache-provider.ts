@@ -223,36 +223,8 @@ export class FileCacheProvider implements CacheProvider {
   }
 
   async has(key: string): Promise<boolean> {
-    try {
-      await this.ensureCacheDir();
-      const filePath = this.getFilePath(key);
-
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch {
-        // Sync cache miss to monitoring
-        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
-        return false;
-      }
-
-      // Read and check if expired
-      const content = await fs.readFile(filePath, 'utf-8');
-      const entry: CacheEntry = JSON.parse(content);
-
-      if (this.isExpired(entry)) {
-        await this.delete(key);
-        // Sync expired cache to monitoring
-        await getCacheMonitor().syncCacheStatus('file', key, 'missing');
-        return false;
-      }
-
-      // Sync found cache to monitoring
-      await getCacheMonitor().syncCacheStatus('file', key, 'exists', entry);
-      return true;
-    } catch {
-      return false;
-    }
+    const data = await this.get(key);
+    return data !== null;
   }
 
   async delete(key: string): Promise<void> {
