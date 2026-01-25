@@ -434,18 +434,26 @@ export class RedisCacheProvider implements CacheProvider {
 
   async clear(): Promise<void> {
     try {
+      console.log('[RedisCacheProvider] 🗑️ Starting Redis cache clear');
+      
       // Find all keys with our prefix
       const keys = await this.client.keys('embeddables-cache:*');
+      console.log(`[RedisCacheProvider] Found ${keys.length} keys to delete`);
       
       if (keys.length > 0) {
         // Delete all matching keys
         await this.client.del(...keys);
+        console.log(`[RedisCacheProvider] ✅ Deleted ${keys.length} keys from Redis`);
+      } else {
+        console.log(`[RedisCacheProvider] No keys to delete`);
       }
 
       // Clear monitoring directory
       await getCacheMonitor().clearProvider('redis');
+      console.log(`[RedisCacheProvider] ✅ Monitoring directory cleared`);
     } catch (error) {
-      console.error('[RedisCacheProvider] Error clearing cache:', error);
+      console.error('[RedisCacheProvider] ❌ Error clearing cache:', error);
+      throw error;
     }
   }
 

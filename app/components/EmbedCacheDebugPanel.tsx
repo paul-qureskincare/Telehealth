@@ -46,6 +46,7 @@ export function EmbedCacheDebugPanel() {
   const [isVisible, setIsVisible] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [timingBreakdown, setTimingBreakdown] = useState<TimingBreakdown[]>([]);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     // Check if CACHE_DEBUG is enabled from window global
@@ -72,6 +73,39 @@ export function EmbedCacheDebugPanel() {
       window.removeEventListener('embed-loaded', handleEmbedLoaded);
     };
   }, []);
+
+  // Clear cache function
+  const handleClearCache = async () => {
+    setIsClearing(true);
+    try {
+      console.log('[DebugPanel] Calling cache clear endpoint...');
+      const response = await fetch('/api/cache-clear', {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log(`[DebugPanel] ✅ Cache cleared successfully (${result.provider}, ${result.clearTime}ms)`);
+        
+        // Wait for file system sync to complete before reloading
+        // The server waits 500ms, we add extra 1.5s on client to be safe
+        console.log('[DebugPanel] ⏳ Waiting for file system sync...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log('[DebugPanel] 🔄 Reloading page to fetch fresh data...');
+        window.location.reload();
+      } else {
+        console.error('[DebugPanel] ❌ Failed to clear cache:', result.message);
+        alert(`Failed to clear cache: ${result.message}`);
+        setIsClearing(false);
+      }
+    } catch (error) {
+      console.error('[DebugPanel] Error clearing cache:', error);
+      alert(`Error clearing cache: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsClearing(false);
+    }
+  };
 
   // Calculate timing breakdown for visual representation
   const calculateTimingBreakdown = (meta: CacheMeta) => {
@@ -324,6 +358,17 @@ export function EmbedCacheDebugPanel() {
           </p>
         </div>
       )}
+
+      {/* Clear Cache Button */}
+      <div className="mt-3 pt-3 border-t border-gray-700">
+        <button
+          onClick={handleClearCache}
+          disabled={isClearing}
+          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded transition-colors duration-200"
+        >
+          {isClearing ? '🔄 Clearing...' : '🗑️ Clear Cache'}
+        </button>
+      </div>
     </div>
   );
 }

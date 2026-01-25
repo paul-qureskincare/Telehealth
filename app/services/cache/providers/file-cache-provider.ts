@@ -206,19 +206,28 @@ export class FileCacheProvider implements CacheProvider {
 
   async clear(): Promise<void> {
     try {
+      console.log(`[FileCacheProvider] 🗑️ Starting cache clear for directory: ${this.cacheDir}`);
       await this.ensureCacheDir();
       const files = await fs.readdir(this.cacheDir);
       
+      console.log(`[FileCacheProvider] Found ${files.length} files to delete`);
+      
       await Promise.all(
         files.map(file => 
-          fs.unlink(join(this.cacheDir, file)).catch(() => {})
+          fs.unlink(join(this.cacheDir, file)).catch((err) => {
+            console.error(`[FileCacheProvider] Error deleting ${file}:`, err);
+          })
         )
       );
 
+      console.log(`[FileCacheProvider] ✅ All cache files deleted`);
+
       // Clear monitoring directory
       await getCacheMonitor().clearProvider('file');
+      console.log(`[FileCacheProvider] ✅ Monitoring directory cleared`);
     } catch (error) {
-      console.error('[FileCacheProvider] Error clearing cache:', error);
+      console.error('[FileCacheProvider] ❌ Error clearing cache:', error);
+      throw error;
     }
   }
 }
