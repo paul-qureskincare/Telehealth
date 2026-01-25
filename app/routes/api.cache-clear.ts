@@ -12,10 +12,6 @@
  */
 
 import { cacheManager } from '../services/cache';
-import { promisify } from 'util';
-import { fsync } from 'fs';
-
-const fsyncAsync = promisify(fsync);
 
 /**
  * Action function that handles POST requests to clear cache
