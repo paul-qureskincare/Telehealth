@@ -46,6 +46,7 @@ export function EmbedCacheDebugPanel() {
   const [isVisible, setIsVisible] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [timingBreakdown, setTimingBreakdown] = useState<TimingBreakdown[]>([]);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     // Check if CACHE_DEBUG is enabled from window global
@@ -72,6 +73,61 @@ export function EmbedCacheDebugPanel() {
       window.removeEventListener('embed-loaded', handleEmbedLoaded);
     };
   }, []);
+
+  // Clear cache function
+  const handleClearCache = async () => {
+    setIsClearing(true);
+    try {
+      console.log('[DebugPanel] 🗑️ Starting cache clear...');
+      
+      // First, clear browser cache for the current page
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        console.log(`[DebugPanel] Found ${cacheNames.length} browser caches to clear`);
+        await Promise.all(
+          cacheNames.map(cacheName => 
+            caches.delete(cacheName).then(deleted => {
+              if (deleted) console.log(`[DebugPanel] ✅ Deleted browser cache: ${cacheName}`);
+            })
+          )
+        );
+      }
+
+      // Clear server-side cache
+      console.log('[DebugPanel] Calling cache clear endpoint...');
+      const response = await fetch('/api/cache-clear', {
+        method: 'POST',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log(`[DebugPanel] ✅ Server cache cleared (${result.provider}, ${result.clearTime}ms)`);
+        
+        // Wait for file system sync to complete before reloading
+        console.log('[DebugPanel] ⏳ Waiting for file system sync...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Reload with cache buster to force fresh data
+        console.log('[DebugPanel] 🔄 Reloading page with cache buster...');
+        const cacheBuster = `ts=${Date.now()}`;
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('cache_bust', cacheBuster);
+        window.location.href = currentUrl.toString();
+      } else {
+        console.error('[DebugPanel] ❌ Failed to clear cache:', result.message);
+        alert(`Failed to clear cache: ${result.message}`);
+        setIsClearing(false);
+      }
+    } catch (error) {
+      console.error('[DebugPanel] Error clearing cache:', error);
+      alert(`Error clearing cache: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsClearing(false);
+    }
+  };
 
   // Calculate timing breakdown for visual representation
   const calculateTimingBreakdown = (meta: CacheMeta) => {
@@ -204,12 +260,12 @@ export function EmbedCacheDebugPanel() {
             {cacheMeta.compressed_size_kb !== undefined && cacheMeta.is_compressed ? (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Data Size (Redis):</span>
+                  <span className="text-gray-300">Data Size (Compressed):</span>
                   <span className="font-mono text-yellow-400 font-bold">{cacheMeta.compressed_size_kb} KB</span>
                 </div>
                 {cacheMeta.uncompressed_size_kb !== undefined && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300 text-xs">Uncompressed:</span>
+                    <span className="text-gray-300 text-xs">Original Size:</span>
                     <span className="font-mono text-gray-400 text-xs">
                       {cacheMeta.uncompressed_size_kb} KB
                       {cacheMeta.compression_ratio && (
@@ -324,6 +380,17 @@ export function EmbedCacheDebugPanel() {
           </p>
         </div>
       )}
+
+      {/* Clear Cache Button */}
+      <div className="mt-3 pt-3 border-t border-gray-700">
+        <button
+          onClick={handleClearCache}
+          disabled={isClearing}
+          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded transition-colors duration-200"
+        >
+          {isClearing ? '🔄 Clearing...' : '🗑️ Clear Cache'}
+        </button>
+      </div>
     </div>
   );
 }
