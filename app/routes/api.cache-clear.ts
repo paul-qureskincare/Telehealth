@@ -53,7 +53,16 @@ export async function action({ request }: { request: Request }) {
         provider: cacheManager.getProviderType(),
         clearTime,
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          // Prevent caching of this response
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Vary': 'Accept-Encoding',
+        },
+      }
     );
   } catch (error) {
     console.error('[CacheClear] ❌ Error clearing cache:', error);
@@ -64,7 +73,12 @@ export async function action({ request }: { request: Request }) {
         error: 'Failed to clear cache',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        },
+      }
     );
   }
 }

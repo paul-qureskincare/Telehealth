@@ -78,23 +78,45 @@ export function EmbedCacheDebugPanel() {
   const handleClearCache = async () => {
     setIsClearing(true);
     try {
+      console.log('[DebugPanel] 🗑️ Starting cache clear...');
+      
+      // First, clear browser cache for the current page
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        console.log(`[DebugPanel] Found ${cacheNames.length} browser caches to clear`);
+        await Promise.all(
+          cacheNames.map(cacheName => 
+            caches.delete(cacheName).then(deleted => {
+              if (deleted) console.log(`[DebugPanel] ✅ Deleted browser cache: ${cacheName}`);
+            })
+          )
+        );
+      }
+
+      // Clear server-side cache
       console.log('[DebugPanel] Calling cache clear endpoint...');
       const response = await fetch('/api/cache-clear', {
         method: 'POST',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
       });
       
       const result = await response.json();
       
       if (response.ok && result.success) {
-        console.log(`[DebugPanel] ✅ Cache cleared successfully (${result.provider}, ${result.clearTime}ms)`);
+        console.log(`[DebugPanel] ✅ Server cache cleared (${result.provider}, ${result.clearTime}ms)`);
         
         // Wait for file system sync to complete before reloading
-        // The server waits 500ms, we add extra 1.5s on client to be safe
         console.log('[DebugPanel] ⏳ Waiting for file system sync...');
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        console.log('[DebugPanel] 🔄 Reloading page to fetch fresh data...');
-        window.location.reload();
+        // Reload with cache buster to force fresh data
+        console.log('[DebugPanel] 🔄 Reloading page with cache buster...');
+        const cacheBuster = `ts=${Date.now()}`;
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('cache_bust', cacheBuster);
+        window.location.href = currentUrl.toString();
       } else {
         console.error('[DebugPanel] ❌ Failed to clear cache:', result.message);
         alert(`Failed to clear cache: ${result.message}`);
