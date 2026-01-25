@@ -65,7 +65,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       console.log(`[EmbedProxy] ✅ CACHE HIT: ${cacheKey}`);
       console.log(`[EmbedProxy]   - Uncompressed size: ${uncompressedKB} KB`);
       if (compressedKB) {
-        console.log(`[EmbedProxy]   - Redis compressed size: ${compressedKB} KB (${metadata.compressionRatio?.toFixed(1)}% saved)`);
+        console.log(`[EmbedProxy]   - Compressed size: ${compressedKB} KB (${metadata.compressionRatio?.toFixed(1)}% saved)`);
       }
       console.log(`[EmbedProxy]   - Cache fetch time: ${cacheGetTime}ms`);
       console.log(`[EmbedProxy]   - Network time: ${networkTime}ms`);

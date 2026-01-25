@@ -260,12 +260,12 @@ export function EmbedCacheDebugPanel() {
             {cacheMeta.compressed_size_kb !== undefined && cacheMeta.is_compressed ? (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Data Size (Redis):</span>
+                  <span className="text-gray-300">Data Size (Compressed):</span>
                   <span className="font-mono text-yellow-400 font-bold">{cacheMeta.compressed_size_kb} KB</span>
                 </div>
                 {cacheMeta.uncompressed_size_kb !== undefined && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300 text-xs">Uncompressed:</span>
+                    <span className="text-gray-300 text-xs">Original Size:</span>
                     <span className="font-mono text-gray-400 text-xs">
                       {cacheMeta.uncompressed_size_kb} KB
                       {cacheMeta.compression_ratio && (

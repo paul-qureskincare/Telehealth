@@ -4,6 +4,10 @@
  * This provider stores cache data in the file system using temporary directory.
  * Works both locally (using os.tmpdir()) and on Vercel serverless (using /tmp).
  * 
+ * Features:
+ * - Gzip compression to reduce file size (10-15x reduction for JSON)
+ * - Metadata tracking for compression ratio
+ * 
  * Note: On Vercel, /tmp is ephemeral and limited to 512MB. Files may not persist
  * between cold starts, but can persist within the same execution environment.
  */
@@ -11,11 +15,17 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { gzip, gunzip } from 'zlib';
+import { promisify } from 'util';
 import type { CacheProvider, CacheEntry } from '../types';
 import { getCacheMonitor } from '../monitor-cache';
 
+const gzipAsync = promisify(gzip);
+const gunzipAsync = promisify(gunzip);
+
 export class FileCacheProvider implements CacheProvider {
   private cacheDir: string;
+  private compressionEnabled: boolean = true;
 
   constructor() {
     // Use /tmp on Vercel, os.tmpdir() locally
@@ -65,8 +75,20 @@ export class FileCacheProvider implements CacheProvider {
         return null;
       }
 
-      // Read and parse cache file
-      const content = await fs.readFile(filePath, 'utf-8');
+      // Read cache file as buffer
+      const buffer = await fs.readFile(filePath);
+      
+      // Try to decompress if compression is enabled
+      let content: string;
+      try {
+        // Try to decompress
+        const decompressed = await gunzipAsync(buffer);
+        content = decompressed.toString('utf-8');
+      } catch {
+        // Not compressed, read as plain text
+        content = buffer.toString('utf-8');
+      }
+
       const entry: CacheEntry<T> = JSON.parse(content);
 
       // Check if expired
@@ -100,8 +122,26 @@ export class FileCacheProvider implements CacheProvider {
         return null;
       }
 
-      // Read and parse cache file
-      const content = await fs.readFile(filePath, 'utf-8');
+      // Read cache file
+      const buffer = await fs.readFile(filePath);
+      
+      // Try to decompress if compression is enabled
+      let content: string;
+      let isCompressed = false;
+      let compressedSize = 0;
+
+      try {
+        // Try to decompress
+        const decompressed = await gunzipAsync(buffer);
+        content = decompressed.toString('utf-8');
+        isCompressed = true;
+        compressedSize = buffer.byteLength;
+        console.log(`[FileCacheProvider] ✅ Decompressed cache: ${(compressedSize / 1024).toFixed(1)} KB → ${(Buffer.byteLength(content) / 1024).toFixed(1)} KB`);
+      } catch {
+        // Not compressed, read as plain text
+        content = buffer.toString('utf-8');
+      }
+
       const entry: CacheEntry<T> = JSON.parse(content);
 
       // Check if expired
@@ -112,8 +152,9 @@ export class FileCacheProvider implements CacheProvider {
         return null;
       }
 
-      // Calculate uncompressed size
+      // Calculate sizes
       const uncompressedSize = Buffer.byteLength(content, 'utf-8');
+      const compressionRatio = isCompressed ? ((1 - compressedSize / uncompressedSize) * 100) : undefined;
 
       // Sync found cache to monitoring
       await getCacheMonitor().syncCacheStatus('file', key, 'exists', entry);
@@ -122,7 +163,9 @@ export class FileCacheProvider implements CacheProvider {
         data: entry.data,
         metadata: {
           uncompressedSize,
-          isCompressed: false,
+          compressedSize: isCompressed ? compressedSize : undefined,
+          isCompressed,
+          compressionRatio: compressionRatio ? parseFloat(compressionRatio.toFixed(1)) : undefined,
         },
       };
     } catch (error) {
@@ -143,8 +186,28 @@ export class FileCacheProvider implements CacheProvider {
         ttl,
       };
 
+      const jsonString = JSON.stringify(entry);
+      const uncompressedSize = Buffer.byteLength(jsonString, 'utf-8');
+
       console.log(`[FileCacheProvider] Writing cache file: ${filePath}`);
-      await fs.writeFile(filePath, JSON.stringify(entry), 'utf-8');
+      
+      // Compress if enabled
+      let bufferToWrite: Buffer;
+      if (this.compressionEnabled) {
+        const compressStartTime = Date.now();
+        bufferToWrite = await gzipAsync(jsonString);
+        const compressTime = Date.now() - compressStartTime;
+        const compressedSize = bufferToWrite.byteLength;
+        const compressionRatio = ((1 - compressedSize / uncompressedSize) * 100).toFixed(1);
+        
+        console.log(
+          `[FileCacheProvider] ✅ CACHE COMPRESSED: ${(uncompressedSize / 1024).toFixed(1)} KB → ${(compressedSize / 1024).toFixed(1)} KB (saved ${compressionRatio}%) in ${compressTime}ms`
+        );
+      } else {
+        bufferToWrite = Buffer.from(jsonString, 'utf-8');
+      }
+
+      await fs.writeFile(filePath, bufferToWrite);
       console.log(`[FileCacheProvider] ✅ Wrote to: ${filePath}`);
 
       // Save to monitoring directory
