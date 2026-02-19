@@ -152,6 +152,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-5Z7G3WZC"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         {children}
         <ScrollRestoration />
         <Scripts />
