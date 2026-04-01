@@ -1,4 +1,3 @@
-import { useSearchParams } from "react-router";
 import type { Route } from "./+types/home";
 import { EmbedCacheDebugPanel } from "../components/EmbedCacheDebugPanel";
 import { SavvyContainer } from "../components/SavvyContainer";
@@ -14,25 +13,22 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const [searchParams] = useSearchParams();
-
   // Initialize Embeddables when savvy container is ready.
-  // Uses URL params if provided, otherwise falls back to defaults (version=latest, hash=landing_main).
+  // Falls back to defaults if URL params are missing — no redirect needed.
   const handleSavvyReady = () => {
-    const flowVersion = searchParams.get("savvy_flow_version") || "latest";
-    const hash = window.location.hash || "#landing_main";
-
-    // Silently set defaults in URL via replaceState (no redirect/navigation)
-    if (!searchParams.has("savvy_flow_version") || !window.location.hash) {
-      const newParams = new URLSearchParams(searchParams);
-      if (!searchParams.has("savvy_flow_version")) {
-        newParams.set("savvy_flow_version", flowVersion);
-      }
-      window.history.replaceState(null, "", `${window.location.pathname}?${newParams.toString()}${hash}`);
-    }
-
     if (window.initEmbeddables) {
-      console.log('[Home] Initializing Embeddables (version:', flowVersion, ', hash:', hash, ')');
+      // Ensure required params exist for Embeddables engine
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("savvy_flow_version")) {
+        url.searchParams.set("savvy_flow_version", "latest");
+      }
+      if (!url.hash) {
+        url.hash = "landing_main";
+      }
+      // Silently update URL without triggering React Router navigation
+      window.history.replaceState(null, "", url.toString());
+
+      console.log('[Home] Initializing Embeddables');
       window.initEmbeddables();
     }
   };

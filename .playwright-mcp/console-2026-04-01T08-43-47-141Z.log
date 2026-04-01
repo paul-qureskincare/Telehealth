@@ -1,0 +1,35 @@
+[     273ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:0
+[    1555ms] [LOG] %c
+▲
+
+__  __                                     _            __
+\ \/ /___  __  __   _________ _____       (_)_  _______/ /_
+ \  / __ \/ / / /  / ___/ __ `/ __ \     / / / / / ___/ __/
+ / / /_/ / /_/ /  / /__/ /_/ / / / /    / / /_/ (__  ) /_
+/_/\____/\__,_/   \___/\__,_/_/ /_/  __/ /\__,_/____/\__/
+         __    _          __  __    /___/
+   _____/ /_  (_)___     / /_/ /_  (_)___  ____ ______
+  / ___/ __ \/ / __ \   / __/ __ \/ / __ \/ __ `/ ___/
+ (__  ) / / / / /_/ /  / /_/ / / / / / / / /_/ (__  )
+/____/_/ /_/_/ .___/   \__/_/ /_/_/_/ /_/\__, /____/
+            /_/                         /____/
+  
+
+Hello!
+
+- Open Source https://vercel.com/oss
+- Careers https://vercel.com/careers
+- Status https://vercel-status.com
+
+ font-family: "Geist Mono", monospace; white-space: pre; line-height: 1; @ https://vercel.com/_next/static/chunks/04gr846c57m0x.js?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy:72
+[    1856ms] [WARNING] Deprecated API for given entry type. @ https://vercel.com/_next/static/chunks/1ruoyjxdqgkds.js?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy:18
+[    2011ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://vercel.com/_next/static/chunks/1ruoyjxdqgkds.js?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy:16
+[    2013ms] [ERROR] Not signed in with the identity provider. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    2032ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://vercel.com/api/jwt:0
+[    5304ms] [WARNING] The resource https://vercel.com/_next/static/media/stripe-dark.16ozjth2vgb_3.svg?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    5304ms] [WARNING] The resource https://vercel.com/_next/static/media/ebay-dark.34mho2a18qqlt.svg?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    5304ms] [WARNING] The resource https://vercel.com/_next/static/media/ebay-light.3ft_ki8203ov0.svg?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    5304ms] [WARNING] The resource https://vercel.com/_next/static/media/stripe-light.2l_1jctpe6k_4.svg?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    5304ms] [WARNING] The resource https://vercel.com/_next/static/media/adobe-light.406_7oryl71va.svg?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ftelehealth-cyeolze46-qure-skincare.vercel.app%252F%26nonce%3D5f5a067f5169bb44a72b7498610f0a0f5c9fc130363ba223d2a7cc2a13eb8ca4:0
+[    5905ms] [ERROR] [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token. @ https://vercel.com/_next/static/chunks/3fsrwch11dek6.js?dpl=dpl_99nQ49kWjH13eX5LV59rzuKUr9Xy:2
+[    5997ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://o205439.ingest.sentry.io/api/1323670/envelope/?sentry_key=d00780d432ac4ccf882f60dd02062e14&sentry_version=7&sentry_client=sentry.javascript.browser%2F7.111.0:0
