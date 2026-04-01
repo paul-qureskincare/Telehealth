@@ -1,0 +1,90 @@
+[     628ms] [LOG] [Home] Initializing Embeddables (version: latest , hash: #landing_main ) @ https://telehealth-cyeolze46-qure-skincare.vercel.app/assets/home-BvNV3Dwe.js:0
+[    2083ms] [LOG] [Embeddables] Load source: 🌐 NATIVE @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:54
+[    2083ms] [LOG] [Embeddables] Load time: 1453ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:55
+[    2083ms] [LOG] [Embeddables] Data size: 1321 KB @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:65
+[    2083ms] [LOG] [Embeddables] Performance breakdown: @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:70
+[    2083ms] [LOG]   - Cache check: 0ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:71
+[    2083ms] [LOG]   - API fetch: 768ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:72
+[    2083ms] [LOG]   - JSON parse: 39ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:73
+[    2083ms] [LOG]   - Network overhead: 1ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:78
+[    2096ms] [LOG] %cThis page was built using Embeddables font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-shadow: 1px 1px 0px rgba(0,0,0,0.6);text-decoration: none;  background-color: #7144F2; color: #F7F5ED; padding:6px 18px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:127
+[    2096ms] [LOG] %c➡  https://embeddables.com font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-decoration: none; padding:6px 0px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:128
+[    2139ms] [WARNING] Error in ComputedField progress_bar_custom_indicator (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:50)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:26:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[    2140ms] [WARNING] Error in ComputedField progress_bar_indicator_array (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:38)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:4:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[    3293ms] [LOG] IP-API data: {as: AS35805 JSC Silknet, city: Tbilisi, country: Georgia, countryCode: GE, isp: JSC "Silknet"} @ https://engine.embeddables.com/bundle.js:1
+[   13939ms] [LOG] [Home] Initializing Embeddables (version: latest , hash: #landing_main ) @ https://telehealth-cyeolze46-qure-skincare.vercel.app/assets/home-BvNV3Dwe.js:0
+[   15181ms] [LOG] [Embeddables] Load source: 🌐 NATIVE @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:54
+[   15181ms] [LOG] [Embeddables] Load time: 1242ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:55
+[   15181ms] [LOG] [Embeddables] Data size: 1321 KB @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:65
+[   15181ms] [LOG] [Embeddables] Performance breakdown: @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:70
+[   15181ms] [LOG]   - Cache check: 0ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:71
+[   15181ms] [LOG]   - API fetch: 527ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:72
+[   15181ms] [LOG]   - JSON parse: 27ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:73
+[   15198ms] [LOG] %cThis page was built using Embeddables font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-shadow: 1px 1px 0px rgba(0,0,0,0.6);text-decoration: none;  background-color: #7144F2; color: #F7F5ED; padding:6px 18px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:127
+[   15199ms] [LOG] %c➡  https://embeddables.com font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-decoration: none; padding:6px 0px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:128
+[   15363ms] [LOG] IP-API data: {as: AS35805 JSC Silknet, city: Tbilisi, country: Georgia, countryCode: GE, isp: JSC "Silknet"} @ https://engine.embeddables.com/bundle.js:1
+[   29920ms] [LOG] [Home] Initializing Embeddables (version: latest , hash: #landing_main ) @ https://telehealth-cyeolze46-qure-skincare.vercel.app/assets/home-BvNV3Dwe.js:0
+[   29926ms] [LOG] [Embeddables] Load source: 🌐 NATIVE @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:54
+[   29926ms] [LOG] [Embeddables] Load time: 6ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:55
+[   29926ms] [LOG] [Embeddables] Data size: 1321 KB @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:65
+[   29926ms] [LOG] [Embeddables] Performance breakdown: @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:70
+[   29926ms] [LOG]   - Cache check: 0ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:71
+[   29926ms] [LOG]   - API fetch: 527ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:72
+[   29926ms] [LOG]   - JSON parse: 27ms @ https://telehealth-cyeolze46-qure-skincare.vercel.app/:73
+[   29937ms] [LOG] %cThis page was built using Embeddables font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-shadow: 1px 1px 0px rgba(0,0,0,0.6);text-decoration: none;  background-color: #7144F2; color: #F7F5ED; padding:6px 18px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:127
+[   29938ms] [LOG] %c➡  https://embeddables.com font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-decoration: none; padding:6px 0px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:128
+[   30107ms] [LOG] IP-API data: {as: AS35805 JSC Silknet, city: Tbilisi, country: Georgia, countryCode: GE, isp: JSC "Silknet"} @ https://engine.embeddables.com/bundle.js:1
+[  155213ms] [LOG] [Home] Initializing Embeddables @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/assets/home-qYQLQZRg.js:0
+[  156442ms] [LOG] [Embeddables] Load source: 🌐 NATIVE @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:54
+[  156442ms] [LOG] [Embeddables] Load time: 1227ms @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:55
+[  156442ms] [LOG] [Embeddables] Data size: 1321 KB @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:65
+[  156442ms] [LOG] [Embeddables] Performance breakdown: @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:70
+[  156442ms] [LOG]   - Cache check: 1ms @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:71
+[  156442ms] [LOG]   - API fetch: 462ms @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:72
+[  156442ms] [LOG]   - JSON parse: 24ms @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:73
+[  156442ms] [LOG]   - Network overhead: 1ms @ https://telehealth-8xtrrit6p-qure-skincare.vercel.app/:78
+[  156462ms] [LOG] %cThis page was built using Embeddables font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-shadow: 1px 1px 0px rgba(0,0,0,0.6);text-decoration: none;  background-color: #7144F2; color: #F7F5ED; padding:6px 18px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:127
+[  156462ms] [LOG] %c➡  https://embeddables.com font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-decoration: none; padding:6px 0px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:128
+[  156516ms] [WARNING] Error in ComputedField progress_bar_custom_indicator (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:50)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:26:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[  156517ms] [WARNING] Error in ComputedField progress_bar_indicator_array (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:38)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:4:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[  157356ms] [LOG] IP-API data: {as: AS35805 JSC Silknet, city: Tbilisi, country: Georgia, countryCode: GE, isp: JSC "Silknet"} @ https://engine.embeddables.com/bundle.js:1
