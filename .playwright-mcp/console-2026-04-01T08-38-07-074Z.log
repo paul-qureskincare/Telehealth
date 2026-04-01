@@ -1,0 +1,34 @@
+[     881ms] [LOG] [Home] Initializing Embeddables after savvy container ready @ https://www.qureskincarerx.com/assets/home-BSeAnAa9.js:0
+[    2560ms] [LOG] [Embeddables] Load source: 🌐 NATIVE @ https://www.qureskincarerx.com/:54
+[    2560ms] [LOG] [Embeddables] Load time: 1678ms @ https://www.qureskincarerx.com/:55
+[    2560ms] [LOG] [Embeddables] Data size: 1321 KB @ https://www.qureskincarerx.com/:65
+[    2560ms] [LOG] [Embeddables] Performance breakdown: @ https://www.qureskincarerx.com/:70
+[    2560ms] [LOG]   - Cache check: 1ms @ https://www.qureskincarerx.com/:71
+[    2560ms] [LOG]   - API fetch: 902ms @ https://www.qureskincarerx.com/:72
+[    2560ms] [LOG]   - JSON parse: 104ms @ https://www.qureskincarerx.com/:73
+[    2560ms] [LOG]   - Network overhead: 10ms @ https://www.qureskincarerx.com/:78
+[    2575ms] [LOG] %cThis page was built using Embeddables font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-shadow: 1px 1px 0px rgba(0,0,0,0.6);text-decoration: none;  background-color: #7144F2; color: #F7F5ED; padding:6px 18px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:127
+[    2576ms] [LOG] %c➡  https://embeddables.com font-size: 14px; font-weight:500;font-family: "Consolas", sans-serif; text-decoration: none; padding:6px 0px; border-radius: 5px; box-shadow: 10px 10px 0px 3px rgba(0,0,0,0.75); @ renderer_eval_js_v3.ts:128
+[    2616ms] [WARNING] Error in ComputedField progress_bar_custom_indicator (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:50)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:26:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[    2616ms] [WARNING] Error in ComputedField progress_bar_indicator_array (Flow ID: flow_2571d52dhga9i00bfhde72a48gj) TypeError: Cannot convert undefined or null to object
+    at Object.values (<anonymous>)
+    at result (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:3:38)
+    at eval (eval at getCustomResult (https://engine.embeddables.com/bundle.js:2:11428), <anonymous>:4:4)
+    at ComputedField.getCustomResult (https://engine.embeddables.com/bundle.js:2:11428)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:7662)
+    at ComputedField.<anonymous> (https://engine.embeddables.com/bundle.js:2:553365)
+    at Generator.<anonymous> (https://engine.embeddables.com/bundle.js:2:805867)
+    at Generator.next (https://engine.embeddables.com/bundle.js:2:773453)
+    at r (https://engine.embeddables.com/bundle.js:2:66177)
+    at s (https://engine.embeddables.com/bundle.js:2:66379) @ https://engine.embeddables.com/bundle.js:1
+[    3533ms] [LOG] IP-API data: {as: AS35805 JSC Silknet, city: Tbilisi, country: Georgia, countryCode: GE, isp: JSC "Silknet"} @ https://engine.embeddables.com/bundle.js:1
