@@ -6,4 +6,5 @@
 /.react-router/
 /build/
 /cache/
+.claude
 CLAUDE.md
